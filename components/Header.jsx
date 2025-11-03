@@ -11,7 +11,7 @@ const Header = () => {
     { href: "/publications", label: "Publikasi" },
     { href: "/activity", label: "Kegiatan" },
     { href: "/lecturer", label: "Pengajaran" },
-    { href: "/contact", label: "Kontak" },
+    { href: "/project", label: "Proyek" },
   ];
 
   return (
