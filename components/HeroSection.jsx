@@ -20,8 +20,7 @@ const HeroSection = () => {
                         M. Taufiq, M.Kom
                     </h1>
                     <p className="text-lg mb-4">
-                        Dosen & Peneliti di bidang Teknologi Informasi. Fokus riset pada AI, Cloud Computing,
-                        dan Inovasi Pendidikan Digital.
+                        Dosen & Peneliti di bidang Teknologi Informasi. Fokus riset pada Pengembangan Sistem Informasi, Aplikasi Web dan Mobile dan Inovasi Pendidikan Digital.
                     </p>
                     <div className="flex gap-4 mt-6">
                         <Link href="/publications" className="px-5 py-2 bg-white text-blue-700 rounded-md font-semibold hover:bg-gray-100 transition-colors">
