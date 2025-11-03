@@ -1,13 +1,14 @@
 import Header from "@/components/Header";
-import RecentPublication from "@/components/RecentPublication";
+import RecentLecturer from "@/components/RecentLecturer";
 import Footer from "@/components/Footer";
 
-export default function Publications() {
+
+export default function Lecturer() {
     return (
         <div className="bg-gray-50 text-gray-800">
             <Header />
             <main>
-                <RecentPublication />
+                <RecentLecturer />
             </main>
             <Footer />
         </div>
