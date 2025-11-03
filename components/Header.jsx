@@ -10,6 +10,7 @@ const Header = () => {
     { href: "/about", label: "Tentang" },
     { href: "/publications", label: "Publikasi" },
     { href: "/activity", label: "Kegiatan" },
+    { href: "/lecturer", label: "Pengajaran" },
     { href: "/contact", label: "Kontak" },
   ];
 

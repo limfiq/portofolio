@@ -48,4 +48,4 @@ const RecentPublication = () => {
     );
 };
 
-export default RecentPostsSection;
+export default RecentPublication;

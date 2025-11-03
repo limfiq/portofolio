@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import AboutSection from "@/components/AboutSection";
+import RecentLecturer from "@/components/RecentLecturer";
 import RecentPostsSection from "@/components/RecentPostsSection";
 import RecentCommunity from "@/components/RecentCommunity";
 import RecentActivity from "@/components/RecentActivity";
@@ -14,6 +15,7 @@ export default function Home() {
       <main>
         <HeroSection />
         <AboutSection />
+        <RecentLecturer />
         <RecentPublication />
         <RecentCommunity />
         <RecentActivity />

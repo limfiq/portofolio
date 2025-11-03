@@ -48,4 +48,4 @@ const RecentActivity = () => {
     );
 };
 
-export default RecentPostsSection;
+export default RecentActivity;

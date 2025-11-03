@@ -14,7 +14,7 @@ const PostCard = ({ title, description, slug, imageUrl }) => (
     </div>
 );
 
-const RecentCommunity = () => {
+const RecentLecturer = () => {
     const posts = [
         {
             title: "Masa Depan AI dalam Pendidikan Tinggi",
@@ -48,4 +48,4 @@ const RecentCommunity = () => {
     );
 };
 
-export default RecentCommunity;
+export default RecentLecturer;
