@@ -1,5 +1,8 @@
+"use client";
 import Image from "next/image";
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { supabase } from "../config/supabaseClient"; // Pastikan path ini benar
 
 const PostCard = ({ title, description, slug, imageUrl }) => (
     <div className="bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
@@ -15,33 +18,54 @@ const PostCard = ({ title, description, slug, imageUrl }) => (
 );
 
 const RecentLecturer = () => {
-    const posts = [
-        {
-            title: "Masa Depan AI dalam Pendidikan Tinggi",
-            description: "Menjelajahi bagaimana AI dapat merevolusi cara kita belajar dan mengajar di universitas.",
-            slug: "post-1",
-            imageUrl: "/placeholder.jpg",
-        },
-        {
-            title: "Optimasi Arsitektur Cloud untuk Aplikasi Skala Besar",
-            description: "Studi kasus tentang praktik terbaik dalam merancang infrastruktur cloud yang efisien dan andal.",
-            slug: "post-2",
-            imageUrl: "/placeholder.jpg",
-        },
-        {
-            title: "Pengabdian Masyarakat: Workshop Coding untuk Siswa SMA",
-            description: "Berbagi pengalaman dan kegembiraan dalam memperkenalkan dasar-dasar pemrograman kepada generasi muda.",
-            slug: "post-3",
-            imageUrl: "/placeholder.jpg",
-        },
-    ];
+    const [teachings, setTeachings] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchTeaching = async () => {
+            try {
+                setLoading(true);
+                const { data, error } = await supabase
+                    .from('teaching')
+                    .select('id, course_name, description') // Pilih kolom yang relevan
+                    .order('created_at', { ascending: false }) // Urutkan berdasarkan data terbaru
+                    .limit(3); // Ambil 3 data mengajar terbaru
+
+                if (error) {
+                    throw error;
+                }
+
+                setTeachings(data);
+            } catch (err) {
+                console.error("Error fetching teaching data:", err.message);
+                setError("Gagal memuat data mengajar.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTeaching();
+    }, []);
+
+    if (loading) return <p className="text-center py-16">Memuat data mengajar...</p>;
+    if (error) return <p className="text-center py-16 text-red-500">{error}</p>;
+    if (teachings.length === 0) return <p className="text-center py-16">Belum ada data mengajar terbaru.</p>;
 
     return (
         <section className="bg-white py-16">
             <div className="max-w-6xl mx-auto px-6">
-                <h2 className="text-3xl font-bold text-center mb-8">Tulisan Terbaru</h2>
+                <h2 className="text-3xl font-bold text-center mb-8">Aktivitas Mengajar Terbaru</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {posts.map((post) => <PostCard key={post.slug} {...post} />)}
+                    {teachings.map((item) => (
+                        <PostCard
+                            key={item.id}
+                            title={item.course_name}
+                            description={item.description}
+                            slug={item.id.toString()}
+                            imageUrl="/placeholder.jpg" // Gunakan placeholder karena tidak ada gambar di tabel
+                        />
+                    ))}
                 </div>
             </div>
         </section>

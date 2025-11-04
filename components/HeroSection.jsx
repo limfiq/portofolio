@@ -9,8 +9,8 @@ const HeroSection = () => {
                     <Image
                         src="/profile.jpg"
                         alt="Foto Dosen"
-                        width={192}
-                        height={192}
+                        width={350}
+                        height={350}
                         className="w-48 h-48 rounded-full object-cover border-4 border-white shadow-lg"
                         priority
                     />
