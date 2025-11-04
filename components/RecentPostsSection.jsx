@@ -30,8 +30,8 @@ const RecentPostsSection = () => {
                     .from('blogs')
                     .select('id, title, slug, content, cover_image')
                     .eq('status', 'published') // Hanya ambil blog yang sudah dipublikasikan
-                    .order('created_at', { ascending: false }) // Urutkan berdasarkan tanggal terbaru
-                    .limit(3); // Ambil 3 tulisan terbaru
+                    .order('created_at', { ascending: false }); // Urutkan berdasarkan tanggal terbaru
+                // .limit(3) // Ambil 3 tulisan terbaru
 
                 if (error) throw error;
                 setBlogs(data);

@@ -29,8 +29,8 @@ const RecentProject = () => {
                 const { data, error } = await supabase
                     .from('research_projects')
                     .select('id, title, abstract') // Pilih kolom yang relevan
-                    .order('created_at', { ascending: false }) // Urutkan berdasarkan data terbaru
-                    .limit(3); // Ambil 3 proyek terbaru
+                    .order('created_at', { ascending: false }); // Urutkan berdasarkan data terbaru
+                // .limit(3); // Ambil 3 proyek terbaru
 
                 if (error) throw error;
                 setProjects(data);

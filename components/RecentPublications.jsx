@@ -33,8 +33,8 @@ const RecentPublications = () => {
                 const { data, error } = await supabase
                     .from('publications')
                     .select('id, title, abstract, year, type') // Pilih kolom yang relevan
-                    .order('year', { ascending: false }) // Urutkan berdasarkan tahun terbaru
-                    .limit(3); // Ambil 3 publikasi terbaru
+                    .order('year', { ascending: false }); // Urutkan berdasarkan tahun terbaru
+                // .limit(3); // Ambil 3 publikasi terbaru
 
                 if (error) throw error;
                 setPublications(data);
