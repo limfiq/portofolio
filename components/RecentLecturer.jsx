@@ -29,8 +29,8 @@ const RecentLecturer = () => {
                 const { data, error } = await supabase
                     .from('teaching')
                     .select('id, course_name, description') // Pilih kolom yang relevan
-                    .order('created_at', { ascending: false }) // Urutkan berdasarkan data terbaru
-                    .limit(3); // Ambil 3 data mengajar terbaru
+                    .order('created_at', { ascending: false }); // Urutkan berdasarkan data terbaru
+                // .limit(3);  Ambil 3 data mengajar terbaru
 
                 if (error) {
                     throw error;

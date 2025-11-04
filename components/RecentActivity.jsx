@@ -30,8 +30,8 @@ const RecentActivity = () => {
                 const { data, error } = await supabase
                     .from('community_services')
                     .select('id, title, description, link') // Pilih kolom yang relevan
-                    .order('created_at', { ascending: false }) // Urutkan berdasarkan tanggal terbaru
-                    .limit(3); // Ambil 3 aktivitas terbaru
+                    .order('created_at', { ascending: false }); // Urutkan berdasarkan tanggal terbaru
+                // .limit(3); // Ambil 3 aktivitas terbaru
 
                 if (error) {
                     throw error;
