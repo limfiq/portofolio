@@ -11,7 +11,7 @@ const PostCard = ({ title, description, slug, imageUrl }) => (
         <div className="p-6">
             <h3 className="text-xl font-semibold mb-2">{title}</h3>
             <p className="text-gray-600 mb-4">{description}</p>
-            <Link href={`/blog/${slug}`} className="font-semibold text-blue-600 hover:underline">
+            <Link href={`/activity/${slug}`} className="font-semibold text-blue-600 hover:underline">
                 Baca Selengkapnya &rarr;
             </Link>
         </div>
@@ -56,7 +56,7 @@ const RecentActivity = () => {
     return (
         <section className="bg-white py-16">
             <div className="max-w-6xl mx-auto px-6">
-                <h2 className="text-3xl font-bold text-center mb-8">Tulisan Terbaru</h2>
+                <h2 className="text-3xl font-bold text-center mb-8">Aktivitas Pengabdian Terbaru</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {activities.map((activity) => (
                         <PostCard
@@ -66,10 +66,10 @@ const RecentActivity = () => {
                             // Untuk slug, kita bisa menggunakan ID atau membuat slug dari title.
                             // Untuk saat ini, kita gunakan ID. Jika ingin slug yang lebih SEO-friendly,
                             // Anda bisa menambahkan kolom 'slug' di tabel atau membuat fungsi slugify.
-                            slug={activity.id.toString()} 
+                            slug={activity.id.toString()}
                             // Tabel community_services tidak memiliki kolom gambar.
                             // Kita gunakan placeholder atau tambahkan kolom 'image_url' di tabel.
-                            imageUrl="/placeholder.jpg" 
+                            imageUrl="/placeholder.jpg"
                         />
                     ))}
                 </div>

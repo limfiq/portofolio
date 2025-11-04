@@ -6,11 +6,11 @@ import { supabase } from "../config/supabaseClient"; // Pastikan path ini benar
 
 const PostCard = ({ title, description, slug, imageUrl }) => (
     <div className="bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-        <Image src={imageUrl} alt={title} width={400} height={250} className="w-full h-48 object-cover" />
+        <Image src={imageUrl} alt={title} width={400} height={250} className="w-full h-48 object-cover" priority />
         <div className="p-6">
             <h3 className="text-xl font-semibold mb-2">{title}</h3>
             <p className="text-gray-600 mb-4">{description}</p>
-            <Link href={`/blog/${slug}`} className="font-semibold text-blue-600 hover:underline">
+            <Link href={`/teaching/${slug}`} className="font-semibold text-blue-600 hover:underline" prefetch={false}>
                 Baca Selengkapnya &rarr;
             </Link>
         </div>
