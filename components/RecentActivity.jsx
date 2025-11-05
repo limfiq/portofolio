@@ -50,7 +50,7 @@ const RecentActivity = () => {
                 setLoading(true);
                 const { data, error } = await supabase
                     .from('community_services')
-                    .select('id, title, description, link, cover_image, location, year') // Mengambil kembali 'cover_image'
+                    .select('id, title, description, link, cover_image, location, year, slug') // Mengambil kembali 'cover_image'
                     .order('created_at', { ascending: false }); // Urutkan berdasarkan tanggal terbaru
                 // .limit(3); // Ambil 3 aktivitas terbaru
 
@@ -103,7 +103,7 @@ const RecentActivity = () => {
                             // Untuk slug, kita bisa menggunakan ID atau membuat slug dari title.
                             // Untuk saat ini, kita gunakan ID. Jika ingin slug yang lebih SEO-friendly,
                             // Anda bisa menambahkan kolom 'slug' di tabel atau membuat fungsi slugify.
-                            slug={activity.id.toString()}
+                            slug={activity.slug}
                             location={activity.location}
                             year={activity.year}
                             imageUrl={getGoogleDriveImageUrl(activity.cover_image)}

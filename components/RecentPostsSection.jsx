@@ -65,7 +65,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, loading }) 
 };
 
 const getGoogleDriveImageUrl = (imageIdentifier) => {
-    if (!imageIdentifier) return "/placeholder.jpg";
+    if (!imageIdentifier) return "/banner1.png";
     if (imageIdentifier.startsWith('http')) return imageIdentifier;
     return `https://drive.google.com/uc?export=view&id=${imageIdentifier}`;
 };

@@ -50,7 +50,7 @@ const RecentPublications = () => {
                 setLoading(true);
                 const { data, error } = await supabase
                     .from('publications')
-                    .select('id, title, abstract, year, type, cover_image') // Pilih kolom yang relevan, termasuk cover_image
+                    .select('id, title, abstract, year, type, cover_image, slug') // Pilih kolom yang relevan, termasuk cover_image
                     .order('year', { ascending: false }); // Urutkan berdasarkan tahun terbaru
                 // .limit(3); // Ambil 3 publikasi terbaru
 
@@ -96,7 +96,7 @@ const RecentPublications = () => {
                             key={item.id}
                             title={item.title}
                             description={item.abstract}
-                            slug={item.id.toString()}
+                            slug={item.slug}
                             year={item.year}
                             type={item.type}
                             imageUrl={getGoogleDriveImageUrl(item.cover_image)}

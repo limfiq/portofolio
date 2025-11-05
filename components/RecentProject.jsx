@@ -46,7 +46,7 @@ const RecentProject = () => {
                 setLoading(true);
                 const { data, error } = await supabase
                     .from('research_projects')
-                    .select('id, title, abstract, cover_image') // Mengambil kolom cover_image
+                    .select('id, title, abstract, cover_image, slug') // Mengambil kolom cover_image
                     .order('created_at', { ascending: false }); // Urutkan berdasarkan data terbaru
                 // .limit(3); // Ambil 3 proyek terbaru
 
@@ -92,7 +92,7 @@ const RecentProject = () => {
                             key={project.id}
                             title={project.title}
                             description={project.abstract}
-                            slug={project.id.toString()}
+                            slug={project.slug}
                             imageUrl={getGoogleDriveImageUrl(project.cover_image)}
                         />
                     ))}
