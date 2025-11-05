@@ -67,7 +67,7 @@ const RecentLecturer = () => {
             {/* Banner Section - Full Width */}
             <div className="relative h-48 md:h-64 mb-12 overflow-hidden shadow-lg">
                 <Image
-                    src="/placeholder-banner-teaching.jpg" // Ganti dengan gambar banner yang sesuai
+                    src="/banner3.png" // Ganti dengan gambar banner yang sesuai
                     alt="Aktivitas Mengajar"
                     layout="fill"
                     objectFit="cover"

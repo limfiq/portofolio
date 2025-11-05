@@ -76,7 +76,7 @@ const RecentPublications = () => {
             {/* Banner Section - Full Width */}
             <div className="relative h-48 md:h-64 mb-12 overflow-hidden shadow-lg">
                 <Image
-                    src="/placeholder-banner-publications.jpg" // Ganti dengan gambar banner yang sesuai
+                    src="/banner1.png" // Ganti dengan gambar banner yang sesuai
                     alt="Publikasi Terbaru"
                     layout="fill"
                     objectFit="cover"

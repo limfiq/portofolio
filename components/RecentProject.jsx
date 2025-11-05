@@ -72,7 +72,7 @@ const RecentProject = () => {
             {/* Banner Section - Full Width */}
             <div className="relative h-48 md:h-64 mb-12 overflow-hidden shadow-lg">
                 <Image
-                    src="/placeholder-banner-projects.jpg" // Ganti dengan gambar banner yang sesuai
+                    src="/banner4.png" // Ganti dengan gambar banner yang sesuai
                     alt="Proyek Riset Terbaru"
                     layout="fill"
                     objectFit="cover"

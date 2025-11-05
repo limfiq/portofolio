@@ -80,7 +80,7 @@ const RecentActivity = () => {
             <div className="relative h-48 md:h-64 mb-12 overflow-hidden shadow-lg">
                 {/* Background Image */}
                 <Image
-                    src="/placeholder-banner.jpg" // Ganti dengan gambar banner yang sesuai
+                    src="/banner2.png" // Ganti dengan gambar banner yang sesuai
                     alt="Aktivitas Pengabdian"
                     layout="fill"
                     objectFit="cover"
