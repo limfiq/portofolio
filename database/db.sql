@@ -25,6 +25,10 @@ CREATE TABLE public.users (
 -- Aktifkan Row Level Security
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
+-- Kebijakan: Izinkan semua orang untuk membaca data profil
+CREATE POLICY "Allow public read access to profiles" ON public.users FOR
+SELECT USING (true);
+
 -- ============================================================
 -- 2. EDUCATIONS
 -- ============================================================
@@ -41,6 +45,10 @@ CREATE TABLE public.educations (
 );
 
 ALTER TABLE public.educations ENABLE ROW LEVEL SECURITY;
+
+-- Kebijakan: Izinkan semua orang untuk membaca data pendidikan
+CREATE POLICY "Allow public read access to educations" ON public.educations FOR
+SELECT USING (true);
 
 -- ============================================================
 -- 3. TEACHING
@@ -135,6 +143,10 @@ CREATE TABLE public.awards (
 );
 
 ALTER TABLE public.awards ENABLE ROW LEVEL SECURITY;
+
+-- Kebijakan: Izinkan semua orang untuk membaca data penghargaan
+CREATE POLICY "Allow public read access to awards" ON public.awards FOR
+SELECT USING (true);
 
 -- ============================================================
 -- 8. PROJECTS
@@ -247,7 +259,7 @@ VALUES (
         'M. Taufiq,M.Kom',
         'mtaufiq39@gmail.com',
         md5('password123'), -- Peringatan: Ini hanya untuk contoh. Gunakan Supabase Auth untuk manajemen password yang aman.
-        './profile.jpg',
+        '/profile.jpg',
         'Asisten Ahli',
         'Sekolah Tinggi Ilmu Komputer Banyuwangi',
         'Dosen dan peneliti di bidang pengembangan perangkat lunak, kecerdasan buatan, dan sistem informasi. Aktif melakukan penelitian dan pengabdian masyarakat berbasis digitalisasi pendidikan.',

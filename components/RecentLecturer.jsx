@@ -77,7 +77,7 @@ const RecentLecturer = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-slate-700 opacity-70 z-10"></div>
                 {/* Title */}
                 <div className="relative z-20 flex items-center justify-center h-full">
-                    <h2 className="text-4xl md:text-5xl font-bold text-white text-center px-4">Aktivitas Mengajar Terbaru</h2>
+                    <h2 className="text-4xl md:text-5xl font-bold text-white text-center px-4">Aktivitas Mengajar</h2>
                 </div>
             </div>
             <div className="max-w-6xl mx-auto px-6 mt-8">
