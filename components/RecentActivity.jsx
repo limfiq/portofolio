@@ -1,15 +1,18 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo } from "react";
 import { useState, useEffect } from "react";
 import { supabase } from "../config/supabaseClient"; // Pastikan path ini benar
 
-const PostCard = ({ title, description, slug, imageUrl }) => (
+const PostCard = ({ title, description, slug, imageUrl, location, year }) => (
     <div className="bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
         <Image src={imageUrl} alt={title} width={400} height={250} className="w-full h-48 object-cover" />
         <div className="p-6">
-            <h3 className="text-xl font-semibold mb-2">{title}</h3>
+            <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
+                <span className="truncate pr-2">{location}</span>
+                <span className="flex-shrink-0">{year}</span>
+            </div>
+            <h3 className="text-xl font-semibold mb-2 line-clamp-2">{title}</h3>
             <p className="text-gray-600 mb-4">{description}</p>
             <Link href={`/activity/${slug}`} className="font-semibold text-blue-600 hover:underline">
                 Baca Selengkapnya &rarr;
@@ -17,6 +20,24 @@ const PostCard = ({ title, description, slug, imageUrl }) => (
         </div>
     </div>
 );
+
+/**
+ * Mengubah ID file Google Drive menjadi URL gambar yang dapat ditampilkan.
+ * Juga menangani kasus di mana input sudah menjadi URL lengkap.
+ * @param {string} imageIdentifier - ID file Google Drive atau URL gambar lengkap.
+ * @returns {string} URL gambar langsung atau URL placeholder jika ID tidak valid.
+ */
+const getGoogleDriveImageUrl = (imageIdentifier) => {
+    if (!imageIdentifier) {
+        return "/placeholder.jpg";
+    }
+    // Jika sudah merupakan URL, kembalikan langsung.
+    if (imageIdentifier.startsWith('http')) {
+        return imageIdentifier;
+    }
+    // Jika bukan, anggap sebagai ID Google Drive dan buat URL-nya.
+    return `https://drive.google.com/uc?export=view&id=${imageIdentifier}`;
+};
 
 const RecentActivity = () => {
     const [activities, setActivities] = useState([]);
@@ -29,7 +50,7 @@ const RecentActivity = () => {
                 setLoading(true);
                 const { data, error } = await supabase
                     .from('community_services')
-                    .select('id, title, description, link') // Pilih kolom yang relevan
+                    .select('id, title, description, link, cover_image, location, year') // Mengambil kembali 'cover_image'
                     .order('created_at', { ascending: false }); // Urutkan berdasarkan tanggal terbaru
                 // .limit(3); // Ambil 3 aktivitas terbaru
 
@@ -83,9 +104,9 @@ const RecentActivity = () => {
                             // Untuk saat ini, kita gunakan ID. Jika ingin slug yang lebih SEO-friendly,
                             // Anda bisa menambahkan kolom 'slug' di tabel atau membuat fungsi slugify.
                             slug={activity.id.toString()}
-                            // Tabel community_services tidak memiliki kolom gambar.
-                            // Kita gunakan placeholder atau tambahkan kolom 'image_url' di tabel.
-                            imageUrl="/placeholder.jpg"
+                            location={activity.location}
+                            year={activity.year}
+                            imageUrl={getGoogleDriveImageUrl(activity.cover_image)}
                         />
                     ))}
                 </div>

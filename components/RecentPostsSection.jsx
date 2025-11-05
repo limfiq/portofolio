@@ -17,6 +17,24 @@ const PostCard = ({ title, description, slug, imageUrl }) => (
     </div>
 );
 
+/**
+ * Mengubah ID file Google Drive menjadi URL gambar yang dapat ditampilkan.
+ * Juga menangani kasus di mana input sudah menjadi URL lengkap.
+ * @param {string} imageIdentifier - ID file Google Drive atau URL gambar lengkap.
+ * @returns {string} URL gambar langsung atau URL placeholder jika ID tidak valid.
+ */
+const getGoogleDriveImageUrl = (imageIdentifier) => {
+    if (!imageIdentifier) {
+        return "/placeholder.jpg";
+    }
+    // Jika sudah merupakan URL, kembalikan langsung.
+    if (imageIdentifier.startsWith('http')) {
+        return imageIdentifier;
+    }
+    // Jika bukan, anggap sebagai ID Google Drive dan buat URL-nya.
+    return `https://drive.google.com/uc?export=view&id=${imageIdentifier}`;
+};
+
 const RecentPostsSection = () => {
     const [blogs, setBlogs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -58,8 +76,23 @@ const RecentPostsSection = () => {
 
     return (
         <section className="bg-white py-16">
-            <div className="max-w-6xl mx-auto px-6">
-                <h2 className="text-3xl font-bold text-center mb-8">Tulisan Terbaru</h2>
+            {/* Banner Section - Full Width */}
+            <div className="relative h-24 md:h-64 mb-12 overflow-hidden shadow-lg">
+                <Image
+                    src="/placeholder-banner-blog.jpg" // Ganti dengan gambar banner yang sesuai
+                    alt="Tulisan Terbaru"
+                    layout="fill"
+                    objectFit="cover"
+                    className="z-0"
+                />
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-red-900 to-orange-600 opacity-70 z-10"></div>
+                {/* Title */}
+                <div className="relative z-20 flex items-center justify-center h-full">
+                    <h2 className="text-4xl md:text-5xl font-bold text-white text-center px-4">Tulisan Terbaru</h2>
+                </div>
+            </div>
+            <div className="max-w-6xl mx-auto px-6 mt-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {blogs.map((blog) => (
                         <PostCard
@@ -67,7 +100,7 @@ const RecentPostsSection = () => {
                             title={blog.title}
                             description={truncateContent(blog.content)}
                             slug={blog.slug}
-                            imageUrl={blog.cover_image || "/placeholder.jpg"}
+                            imageUrl={getGoogleDriveImageUrl(blog.cover_image)}
                         />
                     ))}
                 </div>

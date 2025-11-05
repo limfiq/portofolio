@@ -10,12 +10,30 @@ const PostCard = ({ title, description, slug, imageUrl }) => (
         <div className="p-6">
             <h3 className="text-xl font-semibold mb-2">{title}</h3>
             <p className="text-gray-600 mb-4">{description}</p>
-            <Link href={`/research/${slug}`} className="font-semibold text-blue-600 hover:underline">
+            <Link href={`/project/${slug}`} className="font-semibold text-blue-600 hover:underline">
                 Baca Selengkapnya &rarr;
             </Link>
         </div>
     </div>
 );
+
+/**
+ * Mengubah ID file Google Drive menjadi URL gambar yang dapat ditampilkan.
+ * Juga menangani kasus di mana input sudah menjadi URL lengkap.
+ * @param {string} imageIdentifier - ID file Google Drive atau URL gambar lengkap.
+ * @returns {string} URL gambar langsung atau URL placeholder jika ID tidak valid.
+ */
+const getGoogleDriveImageUrl = (imageIdentifier) => {
+    if (!imageIdentifier) {
+        return "/placeholder.jpg";
+    }
+    // Jika sudah merupakan URL, kembalikan langsung.
+    if (imageIdentifier.startsWith('http')) {
+        return imageIdentifier;
+    }
+    // Jika bukan, anggap sebagai ID Google Drive dan buat URL-nya.
+    return `https://drive.google.com/uc?export=view&id=${imageIdentifier}`;
+};
 
 const RecentProject = () => {
     const [projects, setProjects] = useState([]);
@@ -28,7 +46,7 @@ const RecentProject = () => {
                 setLoading(true);
                 const { data, error } = await supabase
                     .from('research_projects')
-                    .select('id, title, abstract') // Pilih kolom yang relevan
+                    .select('id, title, abstract, cover_image') // Mengambil kolom cover_image
                     .order('created_at', { ascending: false }); // Urutkan berdasarkan data terbaru
                 // .limit(3); // Ambil 3 proyek terbaru
 
@@ -75,7 +93,7 @@ const RecentProject = () => {
                             title={project.title}
                             description={project.abstract}
                             slug={project.id.toString()}
-                            imageUrl="/placeholder.jpg" // Gunakan placeholder
+                            imageUrl={getGoogleDriveImageUrl(project.cover_image)}
                         />
                     ))}
                 </div>

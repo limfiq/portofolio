@@ -4,21 +4,8 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { supabase } from "../config/supabaseClient"; // Pastikan path ini benar
 
-const PostCard = ({ title, description, slug, imageUrl }) => (
-    <div className="bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-        <Image src={imageUrl} alt={title} width={400} height={250} className="w-full h-48 object-cover" priority />
-        <div className="p-6">
-            <h3 className="text-xl font-semibold mb-2">{title}</h3>
-            <p className="text-gray-600 mb-4">{description}</p>
-            <Link href={`/teaching/${slug}`} className="font-semibold text-blue-600 hover:underline" prefetch={false}>
-                Baca Selengkapnya &rarr;
-            </Link>
-        </div>
-    </div>
-);
-
 const RecentLecturer = () => {
-    const [teachings, setTeachings] = useState([]);
+    const [groupedTeachings, setGroupedTeachings] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -28,15 +15,38 @@ const RecentLecturer = () => {
                 setLoading(true);
                 const { data, error } = await supabase
                     .from('teaching')
-                    .select('id, course_name, description') // Pilih kolom yang relevan
+                    .select('id, course_name, semester, credits, description, syllabus_file')
                     .order('created_at', { ascending: false }); // Urutkan berdasarkan data terbaru
-                // .limit(3);  Ambil 3 data mengajar terbaru
 
                 if (error) {
                     throw error;
                 }
 
-                setTeachings(data);
+                // Mengelompokkan data berdasarkan tahun ajaran dari semester
+                const grouped = data.reduce((acc, course) => {
+                    const yearMatch = course.semester ? course.semester.match(/\d{4}\/\d{4}/) : null;
+                    const academicYear = yearMatch ? yearMatch[0] : 'Lainnya';
+
+                    if (!acc[academicYear]) {
+                        acc[academicYear] = [];
+                    }
+                    acc[academicYear].push(course);
+                    return acc;
+                }, {});
+
+                // Mengurutkan tahun ajaran dari yang terbaru
+                const sortedGrouped = Object.keys(grouped)
+                    .sort((a, b) => {
+                        if (a === 'Lainnya') return 1;
+                        if (b === 'Lainnya') return -1;
+                        return b.localeCompare(a);
+                    })
+                    .reduce((obj, key) => {
+                        obj[key] = grouped[key];
+                        return obj;
+                    }, {});
+
+                setGroupedTeachings(sortedGrouped);
             } catch (err) {
                 console.error("Error fetching teaching data:", err.message);
                 setError("Gagal memuat data mengajar.");
@@ -50,7 +60,7 @@ const RecentLecturer = () => {
 
     if (loading) return <p className="text-center py-16">Memuat data mengajar...</p>;
     if (error) return <p className="text-center py-16 text-red-500">{error}</p>;
-    if (teachings.length === 0) return <p className="text-center py-16">Belum ada data mengajar terbaru.</p>;
+    if (Object.keys(groupedTeachings).length === 0) return <p className="text-center py-16">Belum ada data mengajar terbaru.</p>;
 
     return (
         <section className="bg-white py-16">
@@ -71,15 +81,46 @@ const RecentLecturer = () => {
                 </div>
             </div>
             <div className="max-w-6xl mx-auto px-6 mt-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {teachings.map((item) => (
-                        <PostCard
-                            key={item.id}
-                            title={item.course_name}
-                            description={item.description}
-                            slug={item.id.toString()}
-                            imageUrl="/placeholder.jpg" // Gunakan placeholder karena tidak ada gambar di tabel
-                        />
+                <div className="space-y-12">
+                    {Object.entries(groupedTeachings).map(([year, courses]) => (
+                        <div key={year}>
+                            <h3 className="text-2xl font-bold mb-4 border-b-2 border-blue-600 pb-2">
+                                Tahun Ajaran {year}
+                            </h3>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full bg-white border border-gray-200">
+                                    <thead className="bg-gray-100">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mata Kuliah</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
+                                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">SKS</th>
+                                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Silabus</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {courses.map((course) => (
+                                            <tr key={course.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                                                    {course.course_name}
+                                                    <p className="text-sm text-gray-500 font-normal">{course.description}</p>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-gray-600">{course.semester}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center text-gray-600">{course.credits}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    {course.syllabus_file ? (
+                                                        <Link href={course.syllabus_file} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">
+                                                            Unduh
+                                                        </Link>
+                                                    ) : (
+                                                        <span className="text-gray-400">N/A</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     ))}
                 </div>
             </div>

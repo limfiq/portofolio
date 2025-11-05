@@ -3,13 +3,12 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'example.com',
-        port: '',
-        pathname: '/**', // Mengizinkan semua path di bawah hostname ini
+        protocol: "https",
+        hostname: "drive.google.com",
+        port: "",
+        pathname: "/uc/**",
       },
     ],
   },
 };
-
 module.exports = nextConfig;

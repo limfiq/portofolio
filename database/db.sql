@@ -79,7 +79,8 @@ CREATE TABLE public.publications (
     link VARCHAR(255),
     abstract TEXT,
     authors TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    cover_image VARCHAR(255)
 );
 
 ALTER TABLE public.publications ENABLE ROW LEVEL SECURITY;
@@ -97,7 +98,8 @@ CREATE TABLE public.research_projects (
     role VARCHAR(100),
     abstract TEXT,
     link VARCHAR(255),
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    cover_image VARCHAR(255)
 );
 
 ALTER TABLE public.research_projects ENABLE ROW LEVEL SECURITY;
@@ -113,7 +115,8 @@ CREATE TABLE public.community_services (
     year INT,
     description TEXT,
     link VARCHAR(255),
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    cover_image VARCHAR(255)
 );
 
 ALTER TABLE public.community_services ENABLE ROW LEVEL SECURITY;

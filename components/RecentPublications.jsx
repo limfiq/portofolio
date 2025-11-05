@@ -21,6 +21,24 @@ const PostCard = ({ title, description, slug, imageUrl, year, type }) => (
     </div>
 );
 
+/**
+ * Mengubah ID file Google Drive menjadi URL gambar yang dapat ditampilkan.
+ * Juga menangani kasus di mana input sudah menjadi URL lengkap.
+ * @param {string} imageIdentifier - ID file Google Drive atau URL gambar lengkap.
+ * @returns {string} URL gambar langsung atau URL placeholder jika ID tidak valid.
+ */
+const getGoogleDriveImageUrl = (imageIdentifier) => {
+    if (!imageIdentifier) {
+        return "/placeholder.jpg";
+    }
+    // Jika sudah merupakan URL, kembalikan langsung.
+    if (imageIdentifier.startsWith('http')) {
+        return imageIdentifier;
+    }
+    // Jika bukan, anggap sebagai ID Google Drive dan buat URL-nya.
+    return `https://drive.google.com/uc?export=view&id=${imageIdentifier}`;
+};
+
 const RecentPublications = () => {
     const [publications, setPublications] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -32,7 +50,7 @@ const RecentPublications = () => {
                 setLoading(true);
                 const { data, error } = await supabase
                     .from('publications')
-                    .select('id, title, abstract, year, type') // Pilih kolom yang relevan
+                    .select('id, title, abstract, year, type, cover_image') // Pilih kolom yang relevan, termasuk cover_image
                     .order('year', { ascending: false }); // Urutkan berdasarkan tahun terbaru
                 // .limit(3); // Ambil 3 publikasi terbaru
 
@@ -81,7 +99,7 @@ const RecentPublications = () => {
                             slug={item.id.toString()}
                             year={item.year}
                             type={item.type}
-                            imageUrl="/placeholder.jpg" // Gunakan placeholder
+                            imageUrl={getGoogleDriveImageUrl(item.cover_image)}
                         />
                     ))}
                 </div>

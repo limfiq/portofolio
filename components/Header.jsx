@@ -18,7 +18,7 @@ const Header = () => {
     <header className="bg-white shadow-sm sticky top-0 z-20">
       <nav className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
         <Link href="/" className="text-xl font-bold text-blue-700">
-          M. Taufiq, M.Kom
+          Portofolio
         </Link>
 
         {/* Desktop Menu */}
