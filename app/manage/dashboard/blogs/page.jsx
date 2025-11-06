@@ -1,0 +1,268 @@
+"use client";
+
+import { useCallback, useState, useEffect, useMemo } from "react";
+import { createClient } from "@supabase/supabase-js";
+import Image from "next/image";
+
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+const ITEMS_PER_PAGE = 10;
+
+// Fungsi untuk membuat slug dari judul
+const slugify = (text) => {
+    return text
+        .toString()
+        .toLowerCase()
+        .replace(/\s+/g, '-')           // Ganti spasi dengan -
+        .replace(/[^\w\-]+/g, '')       // Hapus karakter non-word
+        .replace(/\-\-+/g, '-')         // Ganti -- dengan -
+        .replace(/^-+/, '')             // Hapus - dari awal
+        .replace(/-+$/, '');            // Hapus - dari akhir
+};
+
+function BlogsPage() {
+    const supabase = useMemo(() => {
+        return createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        );
+    }, []);
+    const [blogs, setBlogs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentBlog, setCurrentBlog] = useState(null);
+    const [form, setForm] = useState({
+        title: "", slug: "", content: "", tags: "", cover_image: "", status: "draft",
+    });
+    const [imageFile, setImageFile] = useState(null);
+    const [uploading, setUploading] = useState(false);
+    const [page, setPage] = useState(0);
+    const [totalCount, setTotalCount] = useState(0);
+
+    const fetchBlogs = useCallback(async (currentPage) => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from("blogs")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .range(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE - 1);
+
+        if (error) {
+            setError(error.message);
+            setBlogs([]);
+        } else {
+            setBlogs(data);
+            setError(null);
+        }
+        setLoading(false);
+    }, []);
+
+    const fetchCount = useCallback(async () => {
+        const { count, error } = await supabase
+            .from("blogs")
+            .select("id", { count: "exact", head: true });
+        if (error) console.error("Error fetching count:", error);
+        else setTotalCount(count);
+    }, []);
+
+    useEffect(() => {
+        fetchBlogs(page);
+        fetchCount();
+    }, [page, fetchBlogs, fetchCount]);
+
+    const handleOpenModal = (blog = null) => {
+        setCurrentBlog(blog);
+        setForm(blog ? { ...blog } : { title: "", slug: "", content: "", tags: "", cover_image: "", status: "draft" });
+        setImageFile(null);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setCurrentBlog(null);
+        setError(null);
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        const newForm = { ...form, [name]: value };
+        // Buat slug otomatis jika judul berubah & ini adalah post baru
+        if (name === "title" && !currentBlog) {
+            newForm.slug = slugify(value);
+        }
+        setForm(newForm);
+    };
+
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setImageFile(e.target.files[0]);
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setUploading(true);
+        setError(null);
+
+        let imageUrl = form.cover_image;
+
+        if (imageFile) {
+            const fileName = `${Date.now()}_${slugify(imageFile.name)}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from("portfolio-images")
+                .upload(`blogs/${fileName}`, imageFile, { upsert: true });
+
+            if (uploadError) {
+                setError(uploadError.message);
+                setUploading(false);
+                return;
+            }
+
+            const { data: urlData } = supabase.storage.from("portfolio-images").getPublicUrl(uploadData.path);
+            imageUrl = urlData.publicUrl;
+        }
+
+        const blogData = { ...form, cover_image: imageUrl, user_id: 1 };
+
+        const { error: queryError } = currentBlog
+            ? await supabase.from("blogs").update(blogData).eq("id", currentBlog.id)
+            : await supabase.from("blogs").insert(blogData);
+
+        if (queryError) {
+            setError(queryError.message);
+        } else {
+            handleCloseModal();
+            fetchBlogs(page);
+            fetchCount();
+        }
+        setUploading(false);
+    };
+
+    const handleDelete = async (blogId, imagePath) => {
+        if (window.confirm("Apakah Anda yakin ingin menghapus tulisan ini?")) {
+            if (imagePath) {
+                const pathParts = imagePath.split('/');
+                const fileName = pathParts.pop();
+                await supabase.storage.from("portfolio-images").remove([`blogs/${fileName}`]);
+            }
+
+            const { error } = await supabase.from("blogs").delete().eq("id", blogId);
+
+            if (error) setError(error.message);
+            else {
+                fetchBlogs(page);
+                fetchCount();
+            }
+        }
+    };
+
+    const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+    return (
+        <div className="p-4 md:p-6">
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold text-gray-800">Manajemen Tulisan</h1>
+                <button onClick={() => handleOpenModal()} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    Tambah Tulisan
+                </button>
+            </div>
+
+            {loading && <p>Memuat data...</p>}
+            {error && <p className="text-red-500 bg-red-100 p-3 rounded-lg">{error}</p>}
+
+            <div className="bg-white shadow-md rounded-lg overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Judul</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {blogs.map((blog) => (
+                            <tr key={blog.id}>
+                                <td className="px-6 py-4 max-w-md">
+                                    <div className="text-sm font-medium text-gray-900 break-words">{blog.title}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${blog.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                        {blog.status}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button onClick={() => handleOpenModal(blog)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
+                                    <button onClick={() => handleDelete(blog.id, blog.cover_image)} className="text-red-600 hover:text-red-900">Hapus</button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="flex justify-between items-center mt-6">
+                <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0 || loading} className="px-4 py-2 bg-gray-300 rounded-lg disabled:opacity-50">
+                    Sebelumnya
+                </button>
+                <span>Halaman {page + 1} dari {totalPages}</span>
+                <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1 || loading} className="px-4 py-2 bg-gray-300 rounded-lg disabled:opacity-50">
+                    Selanjutnya
+                </button>
+            </div>
+
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+                        <h2 className="text-xl font-bold mb-6">{currentBlog ? "Edit" : "Tambah"} Tulisan</h2>
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Judul</label>
+                                <input type="text" name="title" value={form.title} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Slug</label>
+                                <input type="text" name="slug" value={form.slug} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100" readOnly={!currentBlog} required />
+                                <p className="text-xs text-gray-500 mt-1">Slug dibuat otomatis. Hanya bisa diubah saat mengedit.</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Konten</label>
+                                <textarea name="content" value={form.content} onChange={handleInputChange} rows="10" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required></textarea>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Tags (pisahkan dengan koma)</label>
+                                <input type="text" name="tags" value={form.tags} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Status</label>
+                                <select name="status" value={form.status} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                    <option value="draft">Draft</option>
+                                    <option value="published">Published</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Gambar Sampul</label>
+                                <input type="file" accept="image/*" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                                {form.cover_image && !imageFile && <Image src={form.cover_image} alt="Preview" width={100} height={100} className="mt-2 rounded object-cover" />}
+                            </div>
+
+                            {error && <p className="text-red-500 text-sm">{error}</p>}
+
+                            <div className="flex justify-end gap-4 pt-4">
+                                <button type="button" onClick={handleCloseModal} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Batal</button>
+                                <button type="submit" disabled={uploading} className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:bg-blue-300">
+                                    {uploading ? "Menyimpan..." : "Simpan"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default BlogsPage;
