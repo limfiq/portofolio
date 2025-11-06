@@ -6,14 +6,13 @@ import Image from "next/image";
 
 const ITEMS_PER_PAGE = 10;
 
-const PublicationsPage = () => {
-    const supabase = useMemo(() => {
-        return createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-        );
-    }, []);
+// Create the Supabase client once at the module level.
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
+const PublicationsPage = () => {
     const [publications, setPublications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -62,7 +61,7 @@ const PublicationsPage = () => {
         } else {
             setTotalCount(count);
         }
-    }, [supabase]); // Added supabase to dependencies
+    }, [supabase]);
 
     useEffect(() => {
         fetchPublications(page);
@@ -154,12 +153,15 @@ const PublicationsPage = () => {
     const handleDelete = async (publicationId, imagePath) => {
         if (window.confirm("Apakah Anda yakin ingin menghapus publikasi ini?")) {
             if (imagePath) {
-                const pathParts = imagePath.split('/');
-                const fileName = pathParts.pop();
-                // Assuming the image path is like `.../portfolio-images/publications/filename.ext`
-                // We need to reconstruct the path relative to the bucket root
-                const bucketPath = `publications/${fileName}`;
-                await supabase.storage.from("portfolio-images").remove([bucketPath]); // Changed folder
+                try {
+                    const url = new URL(imagePath);
+                    const path = url.pathname.split('/portfolio-images/')[1];
+                    if (path) {
+                        await supabase.storage.from("portfolio-images").remove([path]);
+                    }
+                } catch (e) {
+                    console.error("Failed to parse or delete image from storage:", e);
+                }
             }
 
             const { error } = await supabase.from("publications").delete().eq("id", publicationId); // Changed table name
