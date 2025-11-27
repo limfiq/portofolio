@@ -70,21 +70,27 @@ const PublicationsPage = () => {
 
     const handleOpenModal = (publication = null) => {
         setCurrentPublication(publication);
-        setForm(
-            publication
-                ? { ...publication }
-                : {
-                    title: "",
-                    year: "",
-                    type: "Journal",
-                    publisher: "",
-                    doi: "",
-                    link: "",
-                    abstract: "",
-                    authors: "",
-                    cover_image: "",
-                }
-        );
+        const emptyForm = {
+            title: "",
+            year: "",
+            type: "Journal",
+            publisher: "",
+            doi: "",
+            link: "",
+            abstract: "",
+            authors: "",
+            cover_image: "",
+        };
+
+        if (publication) {
+            const sanitizedPublication = Object.fromEntries(
+                Object.entries(publication).map(([key, value]) => [key, value === null ? "" : value])
+            );
+            setForm({ ...emptyForm, ...sanitizedPublication });
+        } else {
+            setForm(emptyForm);
+        }
+
         setImageFile(null);
         setIsModalOpen(true);
     };

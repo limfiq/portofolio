@@ -1,15 +1,16 @@
 "use client";
 
-import { useCallback, useState, useEffect, useMemo } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import Image from "next/image";
 
+const ITEMS_PER_PAGE = 10;
+
+// This Supabase client is only for storage operations, which are public.
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
-
-const ITEMS_PER_PAGE = 10;
 
 // Fungsi untuk membuat slug dari judul
 const slugify = (text) => {
@@ -24,12 +25,6 @@ const slugify = (text) => {
 };
 
 function BlogsPage() {
-    const supabase = useMemo(() => {
-        return createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-        );
-    }, []);
     const [blogs, setBlogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -45,34 +40,26 @@ function BlogsPage() {
 
     const fetchBlogs = useCallback(async (currentPage) => {
         setLoading(true);
-        const { data, error } = await supabase
-            .from("blogs")
-            .select("*")
-            .order("created_at", { ascending: false })
-            .range(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE - 1);
-
-        if (error) {
-            setError(error.message);
-            setBlogs([]);
-        } else {
-            setBlogs(data);
+        try {
+            const response = await fetch(`/api/blogs?page=${currentPage}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch blogs');
+            }
+            const data = await response.json();
+            setBlogs(data.blogs);
+            setTotalCount(data.totalCount);
             setError(null);
+        } catch (err) {
+            setError(err.message);
+            setBlogs([]);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
-    }, []);
-
-    const fetchCount = useCallback(async () => {
-        const { count, error } = await supabase
-            .from("blogs")
-            .select("id", { count: "exact", head: true });
-        if (error) console.error("Error fetching count:", error);
-        else setTotalCount(count);
     }, []);
 
     useEffect(() => {
         fetchBlogs(page);
-        fetchCount();
-    }, [page, fetchBlogs, fetchCount]);
+    }, [page, fetchBlogs]);
 
     const handleOpenModal = (blog = null) => {
         setCurrentBlog(blog);
@@ -90,7 +77,6 @@ function BlogsPage() {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         const newForm = { ...form, [name]: value };
-        // Buat slug otomatis jika judul berubah & ini adalah post baru
         if (name === "title" && !currentBlog) {
             newForm.slug = slugify(value);
         }
@@ -126,36 +112,42 @@ function BlogsPage() {
             imageUrl = urlData.publicUrl;
         }
 
-        const blogData = { ...form, cover_image: imageUrl, user_id: 1 };
+        const blogData = { ...form, cover_image: imageUrl };
 
-        const { error: queryError } = currentBlog
-            ? await supabase.from("blogs").update(blogData).eq("id", currentBlog.id)
-            : await supabase.from("blogs").insert(blogData);
+        try {
+            const url = currentBlog ? `/api/blogs/${currentBlog.id}` : '/api/blogs';
+            const method = currentBlog ? 'PUT' : 'POST';
 
-        if (queryError) {
-            setError(queryError.message);
-        } else {
-            handleCloseModal();
-            fetchBlogs(page);
-            fetchCount();
-        }
-        setUploading(false);
-    };
+            const response = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(blogData),
+            });
 
-    const handleDelete = async (blogId, imagePath) => {
-        if (window.confirm("Apakah Anda yakin ingin menghapus tulisan ini?")) {
-            if (imagePath) {
-                const pathParts = imagePath.split('/');
-                const fileName = pathParts.pop();
-                await supabase.storage.from("portfolio-images").remove([`blogs/${fileName}`]);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save blog post');
             }
 
-            const { error } = await supabase.from("blogs").delete().eq("id", blogId);
+            handleCloseModal();
+            fetchBlogs(page);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setUploading(false);
+        }
+    };
 
-            if (error) setError(error.message);
-            else {
+    const handleDelete = async (blogId) => {
+        if (window.confirm("Apakah Anda yakin ingin menghapus tulisan ini?")) {
+            try {
+                const response = await fetch(`/api/blogs/${blogId}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    throw new Error('Failed to delete blog post');
+                }
                 fetchBlogs(page);
-                fetchCount();
+            } catch (err) {
+                setError(err.message);
             }
         }
     };
@@ -196,7 +188,7 @@ function BlogsPage() {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button onClick={() => handleOpenModal(blog)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
-                                    <button onClick={() => handleDelete(blog.id, blog.cover_image)} className="text-red-600 hover:text-red-900">Hapus</button>
+                                    <button onClick={() => handleDelete(blog.id)} className="text-red-600 hover:text-red-900">Hapus</button>
                                 </td>
                             </tr>
                         ))}

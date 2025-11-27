@@ -31,7 +31,34 @@ const Page = async (props) => {
 
     const getGoogleDriveImageUrl = (imageIdentifier) => {
         if (!imageIdentifier) return "/banner1.png"; // Fallback image
-        if (imageIdentifier.startsWith('http')) return imageIdentifier;
+
+        // Jika sudah berupa URL, coba parse dan normalisasi ke bentuk uc?export=view&id=ID untuk Drive
+        try {
+            if (typeof imageIdentifier === "string" && imageIdentifier.startsWith("http")) {
+                const parsed = new URL(imageIdentifier);
+                const host = parsed.hostname;
+
+                if (host.includes("drive.google.com")) {
+                    // pattern: /file/d/<id>/...
+                    const pathMatch = parsed.pathname.match(/\/file\/d\/([^\/]+)/);
+                    const idFromPath = pathMatch ? pathMatch[1] : null;
+                    // pattern: ?id=<id>
+                    const idFromQuery = parsed.searchParams.get("id");
+                    const id = idFromPath || idFromQuery;
+
+                    if (id) return `https://drive.google.com/uc?export=view&id=${id}`;
+                    // jika sudah mengarah ke uc atau driveusercontent, kembalikan apa adanya
+                    return imageIdentifier;
+                }
+                // bukan drive => kembalikan apa adanya
+                return imageIdentifier;
+            }
+        } catch (e) {
+            console.error("Invalid image URL:", imageIdentifier, e);
+            return "/banner1.png";
+        }
+
+        // jika hanya ID diberikan
         return `https://drive.google.com/uc?export=view&id=${imageIdentifier}`;
     };
 

@@ -21,29 +21,41 @@ const NavLink = ({ href, icon, children }) => (
     </Link>
 );
 
+// buat single Supabase client di module scope (tidak dibuat ulang tiap render)
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
 export default function DashboardLayout({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
-    const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    );
 
     useEffect(() => {
+        let mounted = true;
+
         const getSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                router.push("/manage");
-            } else {
-                setUser(session.user);
-                setLoading(false);
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) {
+                    console.error("getSession error:", error);
+                }
+                if (!session) {
+                    router.push("/manage");
+                } else if (mounted) {
+                    setUser(session.user);
+                    setLoading(false);
+                }
+            } catch (e) {
+                console.error(e);
             }
         };
 
         getSession();
 
-        const { data: authListener } = supabase.auth.onAuthStateChange(
+        // subscribe auth changes and capture subscription to unsubscribe later
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
             (event, session) => {
                 if (event === "SIGNED_OUT" || !session) {
                     router.push("/manage");
@@ -54,12 +66,19 @@ export default function DashboardLayout({ children }) {
         );
 
         return () => {
-            authListener.subscription.unsubscribe();
+            mounted = false;
+            subscription.unsubscribe();
         };
-    }, [router, supabase.auth]);
+    }, [router]);
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
+        try {
+            const { error } = await supabase.auth.signOut();
+            if (error) throw error;
+            router.push("/manage");
+        } catch (err) {
+            console.error("Logout failed:", err);
+        }
     };
 
     if (loading) {
@@ -80,21 +99,26 @@ export default function DashboardLayout({ children }) {
                 </div>
 
                 <nav className="flex-1 px-4 py-4 space-y-2">
-                    <NavLink href="/manage/dashboard" icon={<DashboardIcon />}>
-                        Ringkasan
-                    </NavLink>
-                    <NavLink href="/manage/dashboard/publications" icon={<PublicationIcon />}>
-                        Publikasi
-                    </NavLink>
-                    <NavLink href="/manage/dashboard/projects" icon={<ProjectIcon />}>
-                        Proyek Riset
-                    </NavLink>
-                    <NavLink href="/manage/dashboard/activities" icon={<ActivityIcon />}>
-                        Aktivitas
-                    </NavLink>
-                    <NavLink href="/manage/dashboard/blogs" icon={<BlogIcon />}>
-                        Tulisan
-                    </NavLink>
+                    <Link href="/manage/dashboard" className="flex items-center px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                        <DashboardIcon />
+                        <span className="ml-4 font-medium">Ringkasan</span>
+                    </Link>
+                    <Link href="/manage/dashboard/publications" className="flex items-center px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                        <PublicationIcon />
+                        <span className="ml-4 font-medium">Publikasi</span>
+                    </Link>
+                    <Link href="/manage/dashboard/projects" className="flex items-center px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                        <ProjectIcon />
+                        <span className="ml-4 font-medium">Proyek Riset</span>
+                    </Link>
+                    <Link href="/manage/dashboard/activities" className="flex items-center px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                        <ActivityIcon />
+                        <span className="ml-4 font-medium">Aktivitas</span>
+                    </Link>
+                    <Link href="/manage/dashboard/blogs" className="flex items-center px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                        <BlogIcon />
+                        <span className="ml-4 font-medium">Tulisan</span>
+                    </Link>
                 </nav>
 
                 {/* --- User Profile & Logout --- */}
