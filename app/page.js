@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 export default function Home() {
   return (
     <div className="bg-gray-50 text-gray-800">
+      <link rel="icon" href="/favicon.ico" />
       <Header />
       <main>
         <HeroSection />
