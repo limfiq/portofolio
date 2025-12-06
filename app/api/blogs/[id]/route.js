@@ -1,20 +1,17 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createSupabaseServerClient } from '@/utils/supabaseClient';
+
 export const dynamic = "force-dynamic";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_KEY || ''
-);
-
 export async function PUT(request, { params }) {
+  const supabase = createSupabaseServerClient();
   const { id } = params;
   const blogData = await request.json();
 
-  // The user_id should not be updated, so we remove it from the data.
+  // User ID tidak boleh diubah
   delete blogData.user_id;
 
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabase
     .from('blogs')
     .update(blogData)
     .eq('id', id)
@@ -29,21 +26,25 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const supabase = createSupabaseServerClient();
   const { id } = params;
 
-  // First, get the image path to delete it from storage
-  const { data: blog } = await supabaseAdmin
+  // Cek cover_image dulu
+  const { data: blog } = await supabase
     .from('blogs')
     .select('cover_image')
     .eq('id', id)
     .single();
 
-  if (blog && blog.cover_image) {
+  if (blog?.cover_image) {
     const imagePath = blog.cover_image.split('/').pop();
-    await supabaseAdmin.storage.from('portfolio-images').remove([`blogs/${imagePath}`]);
+    await supabase
+      .storage
+      .from('portfolio-images')
+      .remove([`blogs/${imagePath}`]);
   }
 
-  const { error } = await supabaseAdmin
+  const { error } = await supabase
     .from('blogs')
     .delete()
     .eq('id', id);
@@ -52,6 +53,5 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ message: 'Blog post deleted successfully' });
+  return NextResponse.json({ message: 'Blog deleted successfully' });
 }
-

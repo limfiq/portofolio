@@ -1,18 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createSupabaseServerClient } from '@/utils/supabaseClient';
+
 export const dynamic = "force-dynamic";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-);
-
 export async function GET(request) {
+  const supabase = createSupabaseServerClient();
+
   const { searchParams } = new URL(request.url);
-  const page = searchParams.get('page') || 0;
+  const page = Number(searchParams.get('page')) || 0;
   const ITEMS_PER_PAGE = 10;
 
-  const { data, error, count } = await supabaseAdmin
+  const { data, error, count } = await supabase
     .from('blogs')
     .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
@@ -22,21 +20,23 @@ export async function GET(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // To get the total count, we need a separate query when using range.
-  const { count: totalCount } = await supabaseAdmin
+  const { count: totalCount } = await supabase
     .from('blogs')
     .select('id', { count: 'exact', head: true });
 
-  return NextResponse.json({ blogs: data, totalCount: totalCount });
+  return NextResponse.json({
+    blogs: data,
+    totalCount: totalCount ?? 0,
+  });
 }
 
 export async function POST(request) {
-  const blogData = await request.json();
+  const supabase = createSupabaseServerClient();
 
-  // Hardcoding user_id = 1 as in the original component
+  const blogData = await request.json();
   const dataToInsert = { ...blogData, user_id: 1 };
 
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabase
     .from('blogs')
     .insert(dataToInsert)
     .select()
@@ -48,4 +48,3 @@ export async function POST(request) {
 
   return NextResponse.json(data);
 }
-
