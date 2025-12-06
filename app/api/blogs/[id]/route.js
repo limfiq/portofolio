@@ -53,3 +53,4 @@ export async function DELETE(request, { params }) {
 
   return NextResponse.json({ message: 'Blog post deleted successfully' });
 }
+export const dynamic = "force-dynamic";
