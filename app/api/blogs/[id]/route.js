@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+export const dynamic = "force-dynamic";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -53,4 +54,4 @@ export async function DELETE(request, { params }) {
 
   return NextResponse.json({ message: 'Blog post deleted successfully' });
 }
-export const dynamic = "force-dynamic";
+
