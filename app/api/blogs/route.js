@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_KEY || ''
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 );
 
 export async function GET(request) {
@@ -31,7 +31,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   const blogData = await request.json();
-  
+
   // Hardcoding user_id = 1 as in the original component
   const dataToInsert = { ...blogData, user_id: 1 };
 
