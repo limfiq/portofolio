@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from '@supabase/ssr'
 
 // --- Ikon SVG untuk Navigasi ---
 const DashboardIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>;
@@ -21,8 +21,7 @@ const NavLink = ({ href, icon, children }) => (
     </Link>
 );
 
-// buat single Supabase client di module scope (tidak dibuat ulang tiap render)
-const supabase = createClient(
+const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
@@ -38,9 +37,7 @@ export default function DashboardLayout({ children }) {
         const getSession = async () => {
             try {
                 const { data: { session }, error } = await supabase.auth.getSession();
-                if (error) {
-                    console.error("getSession error:", error);
-                }
+                if (error) console.error("getSession error:", error);
                 if (!session) {
                     router.push("/manage");
                 } else if (mounted) {
@@ -54,13 +51,13 @@ export default function DashboardLayout({ children }) {
 
         getSession();
 
-        // subscribe auth changes and capture subscription to unsubscribe later
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             (event, session) => {
                 if (event === "SIGNED_OUT" || !session) {
                     router.push("/manage");
                 } else {
                     setUser(session.user);
+                    setLoading(false);
                 }
             }
         );
