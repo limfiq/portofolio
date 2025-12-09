@@ -1,0 +1,118 @@
+# .github/workflows/main.yml
+
+name: portofolio CI/CD Pipeline
+
+on:
+  # Trigger untuk setiap push ke branch mana pun (untuk Testing)
+  push:
+    branches:
+      - '**'
+  # Trigger untuk Pull Request (untuk Preview/Staging Deployment)
+  pull_request:
+    types: [opened, synchronize, reopened]
+    
+  # Trigger manual
+  workflow_dispatch:
+
+jobs:
+  # ==================================
+  # 1. TESTING (LINTING & UNIT TESTS)
+  # ==================================
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔄 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🛠 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm' # Menggunakan npm sebagai package manager
+
+      - name: 📦 Install dependencies
+        run: npm install
+
+      # =================================
+      # NEXT.JS & SUPABASE ENV VARIABLES
+      # (Gunakan secret aman untuk testing jika diperlukan)
+      # =================================
+      - name: 📝 Configure Environment Variables for Testing
+        run: |
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL_TEST }}" >> .env.test
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_TEST }}" >> .env.test
+          
+      - name: 🔎 Run ESLint
+        run: npm run lint
+
+      - name: 🧪 Run Unit Tests (e.g., Jest or Vitest)
+        # Pastikan Anda sudah mendefinisikan script 'test' di package.json
+        run: npm run test --if-present 
+        env:
+          # Pastikan script test Anda bisa membaca .env.test atau menggunakan env dari Github Actions
+          CI: true
+          
+      # ==================================
+      # 2. VERCEL DEPLOYMENT (STAGING/PREVIEW & PRODUCTION)
+      # ==================================
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test # Pastikan job 'test' berhasil sebelum deployment dimulai
+    
+    # Kondisi: Hanya berjalan jika bukan branch 'main' dan ini adalah Pull Request (Staging/Preview)
+    # ATAU jika branch-nya adalah 'main' (Production)
+    if: |
+      (github.event_name == 'pull_request' && github.ref_name != 'main') || 
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+
+    steps:
+      - name: 🔄 Checkout code
+        uses: actions/checkout@v4
+
+      # Menginstall Vercel CLI
+      - name: 📥 Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      # =================================
+      # PENTING: Mengambil konfigurasi Vercel (Project ID & Org ID)
+      # =================================
+      - name: 🔗 Pull Vercel environment variables
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        
+      - name: 📝 Set up .env file for Vercel deployment
+        # Skrip ini akan membuat file .env yang dibutuhkan oleh Vercel build
+        run: |
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PROD }}" > .env.production
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PROD }}" >> .env.production
+          
+          # Jika sedang preview/staging, gunakan variabel staging/preview (opsional)
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+             echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL_STAGING }}" > .env
+             echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}" >> .env
+          else
+             # Jika production, Vercel akan menggunakan Environment Variables yang sudah diset di Vercel UI/CLI
+             # Baris ini lebih untuk memastikan Next.js build memiliki variabel yang dibutuhkan
+             echo "NODE_ENV=production" >> .env
+          fi
+
+      # =================================
+      # STAGING / PREVIEW DEPLOYMENT
+      # =UN-OFFICIAL: Vercel Preview otomatis terjadi pada Pull Request. 
+      # Langkah ini adalah untuk meng-handle deployment secara eksplisit
+      # =================================
+      - name: 🚀 Vercel Deployment (Staging/Preview)
+        if: github.event_name == 'pull_request'
+        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          
+      # =================================
+      # PRODUCTION DEPLOYMENT
+      # =================================
+      - name: 🌐 Vercel Deployment (Production)
+        if: github.ref == 'refs/heads/main'
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
