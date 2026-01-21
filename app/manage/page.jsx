@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -9,9 +9,13 @@ export default function LoginPage() {
     const [error, setError] = useState("");
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    // Initialize Supabase client once per component mount
+    const [supabase] = useState(() =>
+        createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        )
     );
 
     const handleSubmit = async (e) => {
