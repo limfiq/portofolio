@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc; /* Slate 50 */
-  --foreground: #0f172a; /* Slate 900 */
+  --background: #f8fafc;
+  /* Slate 50 */
+  --foreground: #4776e2;
+  /* Slate 900 */
 }
 
 @theme inline {
@@ -14,8 +16,10 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f172a; /* Slate 900 */
-    --foreground: #f8fafc; /* Slate 50 */
+    --background: #4776e2;
+    /* Slate 900 */
+    --foreground: #f8fafc;
+    /* Slate 50 */
   }
 }
 

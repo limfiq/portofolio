@@ -28,8 +28,8 @@ const Header = () => {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-          ? "bg-white/70 backdrop-blur-md shadow-sm border-b border-white/20"
-          : "bg-transparent"
+        ? "bg-white/70 backdrop-blur-md shadow-sm border-b border-white/20"
+        : "bg-transparent"
         }`}
     >
       <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
@@ -57,7 +57,7 @@ const Header = () => {
             )
           })}
           <Link
-            href="/#contact"
+            href="/contact"
             className="px-5 py-2.5 bg-blue-700 text-white text-sm font-medium rounded-full shadow-lg shadow-blue-700/20 hover:bg-blue-800 transform hover:-translate-y-0.5 transition-all"
           >
             Hubungi Saya
@@ -95,7 +95,7 @@ const Header = () => {
             </Link>
           ))}
           <Link
-            href="/#contact"
+            href="/contact"
             onClick={() => setIsMenuOpen(false)}
             className="px-6 py-3 bg-blue-700 text-white font-medium rounded-full shadow-lg shadow-blue-700/20 active:scale-95 transition-transform"
           >
