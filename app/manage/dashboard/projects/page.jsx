@@ -1,14 +1,15 @@
 "use client";
 
 import { useCallback, useState, useEffect, useMemo } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import Image from "next/image";
+import RichTextEditor from "@/components/RichTextEditor";
 
 const ITEMS_PER_PAGE = 10;
 
 function ProjectsPage() {
     const supabase = useMemo(() => {
-        return createClient(
+        return createBrowserClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
         );
@@ -214,7 +215,12 @@ function ProjectsPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
-                                <textarea name="description" value={form.description} onChange={handleInputChange} rows="5" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+                                <div className="mt-1">
+                                    <RichTextEditor
+                                        value={form.description}
+                                        onChange={(content) => setForm(prev => ({ ...prev, description: content }))}
+                                    />
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Link Proyek (opsional)</label>

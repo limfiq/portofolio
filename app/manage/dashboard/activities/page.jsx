@@ -2,11 +2,12 @@
 
 import { useCallback } from "react";
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import RichTextEditor from "@/components/RichTextEditor";
 
-const supabase = createClient(
+const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
@@ -257,7 +258,12 @@ export default function ActivityPage() {
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
-                                    <textarea name="description" value={form.description} onChange={handleInputChange} rows="4" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+                                    <div className="mt-1">
+                                        <RichTextEditor
+                                            value={form.description}
+                                            onChange={(content) => setForm(prev => ({ ...prev, description: content }))}
+                                        />
+                                    </div>
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700">Link (opsional)</label>

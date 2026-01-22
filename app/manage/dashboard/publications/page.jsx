@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useState, useEffect, useMemo } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import Image from "next/image";
+import RichTextEditor from "@/components/RichTextEditor";
 
 const ITEMS_PER_PAGE = 10;
 
 // Create the Supabase client once at the module level.
-const supabase = createClient(
+const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
@@ -268,7 +269,12 @@ const PublicationsPage = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Abstrak</label>
-                                <textarea name="abstract" value={form.abstract} onChange={handleInputChange} rows="5" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+                                <div className="mt-1">
+                                    <RichTextEditor
+                                        value={form.abstract}
+                                        onChange={(content) => setForm(prev => ({ ...prev, abstract: content }))}
+                                    />
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Penulis (pisahkan dengan koma)</label>

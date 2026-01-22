@@ -4,8 +4,8 @@ import { createSupabaseServerClient } from '@/utils/supabase/server';
 export const dynamic = "force-dynamic";
 
 export async function PUT(request, { params }) {
-  const supabase = createSupabaseServerClient();
-  const { id } = params;
+  const supabase = await createSupabaseServerClient();
+  const { id } = await params;
   const blogData = await request.json();
 
   // User ID tidak boleh diubah
@@ -26,8 +26,8 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  const supabase = createSupabaseServerClient();
-  const { id } = params;
+  const supabase = await createSupabaseServerClient();
+  const { id } = await params;
 
   // Cek cover_image dulu
   const { data: blog } = await supabase

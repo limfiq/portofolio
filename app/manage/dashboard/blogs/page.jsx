@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import Image from "next/image";
+import RichTextEditor from "@/components/RichTextEditor";
 
 const ITEMS_PER_PAGE = 10;
 
 // This Supabase client is only for storage operations, which are public.
-const supabase = createClient(
+const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
@@ -42,12 +43,23 @@ function BlogsPage() {
         setLoading(true);
         try {
             const response = await fetch(`/api/blogs?page=${currentPage}`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch blogs');
+
+            let data;
+            const responseText = await response.text();
+
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error("Failed to parse blogs list JSON:", responseText);
+                throw new Error("Invalid server response (not JSON)");
             }
-            const data = await response.json();
-            setBlogs(data.blogs);
-            setTotalCount(data.totalCount);
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to fetch blogs');
+            }
+
+            setBlogs(data.blogs || []);
+            setTotalCount(data.totalCount || 0);
             setError(null);
         } catch (err) {
             setError(err.message);
@@ -125,8 +137,22 @@ function BlogsPage() {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to save blog post');
+                let errorMessage = 'Failed to save blog post';
+                const errorText = await response.text();
+
+                try {
+                    const errorData = JSON.parse(errorText);
+                    errorMessage = errorData.error || errorMessage;
+                } catch (e) {
+                    // If parsing fails, it's likely HTML (500 or 413)
+                    console.error("Failed to parse error response JSON:", errorText);
+                    // Try to extract useful info if it's HTML, or just show status
+                    errorMessage = `Server Error: ${response.status} ${response.statusText}`;
+                    if (response.status === 413) {
+                        errorMessage = "Error: Content is too large (likely images). Please use the image uploader instead of pasting.";
+                    }
+                }
+                throw new Error(errorMessage);
             }
 
             handleCloseModal();
@@ -222,7 +248,12 @@ function BlogsPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Konten</label>
-                                <textarea name="content" value={form.content} onChange={handleInputChange} rows="10" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required></textarea>
+                                <div className="mt-1">
+                                    <RichTextEditor
+                                        value={form.content}
+                                        onChange={(content) => setForm(f => ({ ...f, content }))}
+                                    />
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Tags (pisahkan dengan koma)</label>
