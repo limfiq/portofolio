@@ -103,7 +103,7 @@ const RecentActivity = () => {
                             // Untuk slug, kita bisa menggunakan ID atau membuat slug dari title.
                             // Untuk saat ini, kita gunakan ID. Jika ingin slug yang lebih SEO-friendly,
                             // Anda bisa menambahkan kolom 'slug' di tabel atau membuat fungsi slugify.
-                            slug={activity.slug}
+                            slug={activity.slug || activity.id}
                             location={activity.location}
                             year={activity.year}
                             imageUrl={getGoogleDriveImageUrl(activity.cover_image)}

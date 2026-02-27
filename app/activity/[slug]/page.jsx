@@ -5,11 +5,22 @@ import Image from 'next/image';
 
 const Page = async (props) => {
     const { slug } = await props.params;
-    const { data, error } = await supabase
+    // if slug looks like a numeric id or the query by slug fails, try id
+    let data, error;
+    ({ data, error } = await supabase
         .from("community_services")
         .select("*")
         .eq("slug", slug)
-        .single();
+        .single());
+
+    if (error && slug && /^[0-9]+$/.test(slug)) {
+        // try by id instead
+        ({ data, error } = await supabase
+            .from("community_services")
+            .select("*")
+            .eq("id", parseInt(slug, 10))
+            .single());
+    }
 
     if (error && error.code !== 'PGRST116') {
         console.error('Error fetching activity:', error);

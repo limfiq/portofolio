@@ -19,6 +19,18 @@ export const metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+  openGraph: {
+    title: "Portofolio M. Taufiq, M.Kom",
+    description: "Welcome to my personal portfolio website!",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Portfolio Preview",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({ children }) {

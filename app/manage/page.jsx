@@ -23,19 +23,29 @@ export default function LoginPage() {
         setError("");
         setLoading(true);
 
-        const { data, error: authError } = await supabase.auth.signInWithPassword({
-            email: email.trim(),
-            password: password.trim(),
-        });
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+            const result = await res.json();
 
-        setLoading(false);
+            setLoading(false);
 
-        if (authError) {
-            // Memberikan pesan yang lebih ramah pengguna
-            setError("Email atau password yang Anda masukkan salah. Silakan coba lagi.");
-            console.error("Supabase Auth Error:", authError.message);
-        } else if (data?.user) {
-            router.push("/manage/dashboard");
+            if (!res.ok) {
+                setError("Email atau password yang Anda masukkan salah. Silakan coba lagi.");
+                if (process.env.NODE_ENV === 'development') {
+                    console.error('Login error (server):', result.error);
+                }
+            } else {
+                // successful login; server has set auth cookies
+                router.push('/manage/dashboard');
+            }
+        } catch (err) {
+            setLoading(false);
+            setError('Terjadi kesalahan, silakan coba lagi nanti.');
+            console.error('Login request failed:', err);
         }
     };
 

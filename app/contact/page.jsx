@@ -106,11 +106,12 @@ export default function Contact() {
                     <div className="md:col-span-1 space-y-6">
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                             <h3 className="text-lg font-semibold text-slate-900 mb-2">Email</h3>
-                            <p className="text-slate-600">m.taufiq@example.com</p>
+                            <p className="text-slate-600">ufiq@limfiq.my.id</p>
                         </div>
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                             <h3 className="text-lg font-semibold text-slate-900 mb-2">Lokasi</h3>
-                            <p className="text-slate-600">Indonesia</p>
+
+                            <p className="text-slate-600">Banyuwangi, Jawa Timur, Indonesia</p>
                         </div>
                     </div>
 

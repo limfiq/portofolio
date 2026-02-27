@@ -22,6 +22,7 @@ export default function ActivityPage() {
     const [currentActivity, setCurrentActivity] = useState(null);
     const [form, setForm] = useState({
         title: "",
+        slug: "",
         location: "",
         year: "",
         description: "",
@@ -72,8 +73,8 @@ export default function ActivityPage() {
         setCurrentActivity(activity);
         setForm(
             activity
-                ? { ...activity }
-                : { title: "", location: "", year: "", description: "", link: "", cover_image: "" }
+                ? { ...activity, slug: activity.slug || slugify(activity.title) }
+                : { title: "", slug: "", location: "", year: "", description: "", link: "", cover_image: "" }
         );
         setImageFile(null);
         setIsModalOpen(true);
@@ -85,9 +86,21 @@ export default function ActivityPage() {
         setError(null);
     };
 
+    const slugify = (text) =>
+        text
+            .toString()
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "");
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
+        if (name === "title" && !currentActivity) {
+            // generate slug automatically when creating new
+            setForm((prev) => ({ ...prev, slug: slugify(value) }));
+        }
     };
 
     const handleFileChange = (e) => {
@@ -125,7 +138,8 @@ export default function ActivityPage() {
             ...form,
             cover_image: imageUrl,
             user_id: 1, // Hardcode user_id sesuai skema
-            year: parseInt(form.year, 10)
+            year: parseInt(form.year, 10),
+            slug: form.slug || slugify(form.title),
         };
 
         let response;
@@ -247,6 +261,11 @@ export default function ActivityPage() {
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700">Judul</label>
                                     <input type="text" name="title" value={form.title} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700">Slug</label>
+                                    <input type="text" name="slug" value={form.slug} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="otomatis dari judul" />
+                                    <p className="text-xs text-gray-500 mt-1">Biarkan kosong untuk dibuat otomatis berdasarkan judul.</p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Lokasi</label>
