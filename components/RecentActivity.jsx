@@ -4,6 +4,20 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { supabase } from "../config/supabaseClient"; // Pastikan path ini benar
 
+const stripHtml = (html) => {
+    if (!html) return "";
+    const cleanTag = html.replace(/<[^>]*>?/gm, '');
+    const entities = {
+        '&nbsp;': ' ',
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&quot;': '"',
+        '&#39;': "'",
+    };
+    return cleanTag.replace(/&[a-z0-9#]+;/gi, (match) => entities[match] || match);
+};
+
 const PostCard = ({ title, description, slug, imageUrl, location, year }) => (
     <div className="bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
         <Image src={imageUrl} alt={title} width={400} height={250} className="w-full h-48 object-cover" />
@@ -13,7 +27,7 @@ const PostCard = ({ title, description, slug, imageUrl, location, year }) => (
                 <span className="flex-shrink-0">{year}</span>
             </div>
             <h3 className="text-xl font-semibold mb-2 line-clamp-2">{title}</h3>
-            <p className="text-gray-600 mb-4">{description}</p>
+            <p className="text-gray-600 mb-4">{stripHtml(description)}</p>
             <Link href={`/activity/${slug}`} className="font-semibold text-blue-600 hover:underline">
                 Baca Selengkapnya &rarr;
             </Link>

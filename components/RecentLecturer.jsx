@@ -4,6 +4,20 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { supabase } from "../config/supabaseClient"; // Pastikan path ini benar
 
+const stripHtml = (html) => {
+    if (!html) return "";
+    const cleanTag = html.replace(/<[^>]*>?/gm, '');
+    const entities = {
+        '&nbsp;': ' ',
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&quot;': '"',
+        '&#39;': "'",
+    };
+    return cleanTag.replace(/&[a-z0-9#]+;/gi, (match) => entities[match] || match);
+};
+
 const RecentLecturer = () => {
     const [groupedTeachings, setGroupedTeachings] = useState({});
     const [loading, setLoading] = useState(true);
@@ -102,18 +116,14 @@ const RecentLecturer = () => {
                                             <tr key={course.id} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
                                                     {course.course_name}
-                                                    <p className="text-sm text-gray-500 font-normal">{course.description}</p>
+                                                    <p className="text-sm text-gray-500 font-normal">{stripHtml(course.description)}</p>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-gray-600">{course.semester}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center text-gray-600">{course.credits}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    {course.syllabus_file ? (
-                                                        <Link href={course.syllabus_file} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">
-                                                            Unduh
-                                                        </Link>
-                                                    ) : (
-                                                        <span className="text-gray-400">N/A</span>
-                                                    )}
+                                                    <Link href={`/teaching/${course.id}`} className="text-blue-600 hover:underline font-medium">
+                                                        Lihat Materi & Silabus
+                                                    </Link>
                                                 </td>
                                             </tr>
                                         ))}

@@ -12,11 +12,7 @@ const initConfig = {
         'alignleft aligncenter alignright alignjustify | ' +
         'bullist numlist outdent indent | removeformat | help',
 
-    plugins: [
-        'advlist autolink lists link image charmap print preview anchor',
-        'searchreplace visualblocks code fullscreen',
-        'insertdatetime media table paste code help wordcount'
-    ],
+    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table paste code help wordcount',
 
     // editor-style.css bisa berisi style yang nantinya ada di konten
     content_css: '/styles/editor-content.css',
@@ -36,25 +32,19 @@ const initConfig = {
         }
     },
 
-    // kunci API (jika kamu gunakan cloud) dari .env
-    api_key: process.env.NEXT_PUBLIC_TINYMCE_API_KEY,
-
     // callback tambahan
     setup: (editor) => {
         editor.on('init', () => console.log('TinyMCE ready'));
-        editor.on('Change', () => {
-            /* custom behavior on change */
-        });
     }
 };
 
 export default function RichTextEditor({ value, onChange }) {
     return (
         <Editor
+            apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
             value={value}
             onEditorChange={onChange}
             init={initConfig}
-            className="bg-white"
         />
     );
 }

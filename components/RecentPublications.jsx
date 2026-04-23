@@ -4,7 +4,25 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { supabase } from "../config/supabaseClient"; // Pastikan path ini benar
 
-const PostCard = ({ title, description, slug, imageUrl, year, type }) => (
+const stripHtml = (html) => {
+    if (!html) return "";
+    // Hapus tag HTML
+    const cleanTag = html.replace(/<[^>]*>?/gm, '');
+    // Decode HTML entities (seperti &nbsp;)
+    const entities = {
+        '&nbsp;': ' ',
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&quot;': '"',
+        '&#39;': "'",
+        '&copy;': '©',
+        '&reg;': '®'
+    };
+    return cleanTag.replace(/&[a-z0-9#]+;/gi, (match) => entities[match] || match);
+};
+
+const PostCard = ({ title, description, slug, id, imageUrl, year, type }) => (
     <div className="bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
         <Image src={imageUrl} alt={title} width={400} height={250} className="w-full h-48 object-cover" />
         <div className="p-6">
@@ -13,8 +31,8 @@ const PostCard = ({ title, description, slug, imageUrl, year, type }) => (
                 <span>{year}</span>
             </div>
             <h3 className="text-xl font-semibold mb-2">{title}</h3>
-            <p className="text-gray-600 mb-4 line-clamp-3">{description}</p>
-            <Link href={`/publications/${slug}`} className="font-semibold text-blue-600 hover:underline">
+            <p className="text-gray-600 mb-4 line-clamp-3">{stripHtml(description)}</p>
+            <Link href={`/publications/${slug || id}`} className="font-semibold text-blue-600 hover:underline">
                 Baca Selengkapnya &rarr;
             </Link>
         </div>
@@ -97,6 +115,7 @@ const RecentPublications = () => {
                             title={item.title}
                             description={item.abstract}
                             slug={item.slug}
+                            id={item.id}
                             year={item.year}
                             type={item.type}
                             imageUrl={getGoogleDriveImageUrl(item.cover_image)}

@@ -129,10 +129,21 @@ const RecentPostsSection = () => {
 
     const truncateContent = (content, maxLength = 100) => {
         if (!content) return '';
-        // Hapus tag HTML sederhana jika ada, agar potongannya rapi
+        // Hapus tag HTML
         const plainText = content.replace(/<[^>]+>/g, '');
-        if (plainText.length <= maxLength) return plainText;
-        return plainText.substring(0, maxLength) + '...';
+        // Decode HTML entities (seperti &nbsp;)
+        const entities = {
+            '&nbsp;': ' ',
+            '&amp;': '&',
+            '&lt;': '<',
+            '&gt;': '>',
+            '&quot;': '"',
+            '&#39;': "'",
+        };
+        const decodedText = plainText.replace(/&[a-z0-9#]+;/gi, (match) => entities[match] || match);
+        
+        if (decodedText.length <= maxLength) return decodedText;
+        return decodedText.substring(0, maxLength) + '...';
     };
 
     return (

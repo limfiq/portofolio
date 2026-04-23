@@ -13,6 +13,16 @@ const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+const slugify = (text) => {
+    return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')     // Ganti spasi dengan -
+        .replace(/[^\w-]+/g, '')   // Hapus karakter non-word
+        .replace(/--+/g, '-');     // Ganti multiple - dengan single -
+};
+
 const PublicationsPage = () => {
     const [publications, setPublications] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -138,6 +148,7 @@ const PublicationsPage = () => {
 
         const publicationData = {
             ...form,
+            slug: slugify(form.title),
             cover_image: imageUrl,
             user_id: 1, // Hardcoded user_id, should be dynamic from auth
             year: parseInt(form.year, 10) || null, // Ensure year is an integer or null
@@ -148,6 +159,7 @@ const PublicationsPage = () => {
             : await supabase.from("publications").insert(publicationData); // Changed table name
 
         if (queryError) {
+            console.error("Supabase Save Error:", queryError);
             setError(queryError.message);
         } else {
             handleCloseModal();
@@ -200,6 +212,7 @@ const PublicationsPage = () => {
                     <thead className="bg-gray-50">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Judul</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slug</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tahun</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipe</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
@@ -210,6 +223,11 @@ const PublicationsPage = () => {
                             <tr key={publication.id}>
                                 <td className="px-6 py-4 max-w-sm">
                                     <div className="text-sm font-medium text-gray-900 break-words">{publication.title}</div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className={`text-xs font-mono px-2 py-1 rounded ${publication.slug ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                                        {publication.slug || "MISSING"}
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-500">{publication.year}</td>
                                 <td className="px-6 py-4 text-sm text-gray-500">{publication.type}</td>

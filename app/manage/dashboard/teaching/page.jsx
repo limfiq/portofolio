@@ -2,6 +2,7 @@
 
 import { useCallback, useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
+import Link from "next/link";
 import RichTextEditor from "@/components/RichTextEditor";
 
 const ITEMS_PER_PAGE = 10;
@@ -170,6 +171,7 @@ export default function TeachingPage() {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.semester}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.credits}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <Link href={`/manage/dashboard/teaching/${item.id}/materials`} className="text-green-600 hover:text-green-900 mr-4">Materi</Link>
                                     <button onClick={() => handleOpenModal(item)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
                                     <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-900">Hapus</button>
                                 </td>
