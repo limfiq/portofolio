@@ -3,7 +3,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import Image from "next/image";
-import RichTextEditor from "@/components/RichTextEditor";
+import QuillEditor from "@/components/QuillEditor";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -249,7 +249,7 @@ function BlogsPage() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Konten</label>
                                 <div className="mt-1">
-                                    <RichTextEditor
+                                    <QuillEditor
                                         value={form.content}
                                         onChange={(content) => setForm(f => ({ ...f, content }))}
                                     />

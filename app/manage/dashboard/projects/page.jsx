@@ -3,7 +3,7 @@
 import { useCallback, useState, useEffect, useMemo } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import Image from "next/image";
-import RichTextEditor from "@/components/RichTextEditor";
+import QuillEditor from "@/components/QuillEditor";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -216,7 +216,7 @@ function ProjectsPage() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
                                 <div className="mt-1">
-                                    <RichTextEditor
+                                    <QuillEditor
                                         value={form.description}
                                         onChange={(content) => setForm(prev => ({ ...prev, description: content }))}
                                     />

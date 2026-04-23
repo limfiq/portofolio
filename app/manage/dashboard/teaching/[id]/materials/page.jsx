@@ -3,7 +3,7 @@
 import { useCallback, useState, useEffect, use } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import Link from "next/link";
-import RichTextEditor from "@/components/RichTextEditor";
+import QuillEditor from "@/components/QuillEditor";
 
 const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -186,7 +186,7 @@ export default function MaterialsManagementPage(props) {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Isi Materi</label>
-                                <RichTextEditor
+                                <QuillEditor
                                     value={form.content}
                                     onChange={(content) => setForm({ ...form, content })}
                                 />

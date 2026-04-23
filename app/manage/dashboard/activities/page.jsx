@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import RichTextEditor from "@/components/RichTextEditor";
+import QuillEditor from "@/components/QuillEditor";
 
 const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -278,7 +278,7 @@ export default function ActivityPage() {
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
                                     <div className="mt-1">
-                                        <RichTextEditor
+                                        <QuillEditor
                                             value={form.description}
                                             onChange={(content) => setForm(prev => ({ ...prev, description: content }))}
                                         />
