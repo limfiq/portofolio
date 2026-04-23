@@ -88,9 +88,18 @@ export default function ActivityPage() {
         text
             .toString()
             .trim()
-            .toLowerCase()
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/^-+|-+$/g, "");
+
+const getGDriveDirectLink = (urlOrId) => {
+    if (!urlOrId) return "";
+    const idMatch = urlOrId.match(/(?:id=|\/d\/|folders\/)([a-zA-Z0-9-_]{25,})/);
+    const id = idMatch ? idMatch[1] : urlOrId;
+    if (urlOrId.includes("lh3.googleusercontent.com") || (!urlOrId.includes("drive.google.com") && !urlOrId.includes("google.com/open"))) {
+        return urlOrId;
+    }
+    return `https://lh3.googleusercontent.com/d/${id}`;
+};
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -109,6 +118,7 @@ export default function ActivityPage() {
 
         const activityData = {
             ...form,
+            cover_image: getGDriveDirectLink(form.cover_image),
             user_id: 1, // Hardcode user_id sesuai skema
             year: parseInt(form.year, 10),
             slug: form.slug || slugify(form.title),

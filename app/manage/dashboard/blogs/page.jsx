@@ -13,16 +13,25 @@ const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-// Fungsi untuk membuat slug dari judul
 const slugify = (text) => {
     return text
         .toString()
         .toLowerCase()
-        .replace(/\s+/g, '-')           // Ganti spasi dengan -
-        .replace(/[^\w\-]+/g, '')       // Hapus karakter non-word
-        .replace(/\-\-+/g, '-')         // Ganti -- dengan -
-        .replace(/^-+/, '')             // Hapus - dari awal
-        .replace(/-+$/, '');            // Hapus - dari akhir
+        .replace(/\s+/g, '-')
+        .replace(/[^\w\-]+/g, '')
+        .replace(/\-\-+/g, '-')
+        .replace(/^-+/, '')
+        .replace(/-+$/, '');
+};
+
+const getGDriveDirectLink = (urlOrId) => {
+    if (!urlOrId) return "";
+    const idMatch = urlOrId.match(/(?:id=|\/d\/|folders\/)([a-zA-Z0-9-_]{25,})/);
+    const id = idMatch ? idMatch[1] : urlOrId;
+    if (urlOrId.includes("lh3.googleusercontent.com") || (!urlOrId.includes("drive.google.com") && !urlOrId.includes("google.com/open"))) {
+        return urlOrId;
+    }
+    return `https://lh3.googleusercontent.com/d/${id}`;
 };
 
 function BlogsPage() {
@@ -99,7 +108,10 @@ function BlogsPage() {
         setUploading(true);
         setError(null);
 
-        const blogData = { ...form };
+        const blogData = { 
+            ...form,
+            cover_image: getGDriveDirectLink(form.cover_image)
+        };
 
         try {
             const url = currentBlog ? `/api/blogs/${currentBlog.id}` : '/api/blogs';

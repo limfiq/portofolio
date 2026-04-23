@@ -7,6 +7,16 @@ import QuillEditor from "@/components/QuillEditor";
 
 const ITEMS_PER_PAGE = 10;
 
+const getGDriveDirectLink = (urlOrId) => {
+    if (!urlOrId) return "";
+    const idMatch = urlOrId.match(/(?:id=|\/d\/|folders\/)([a-zA-Z0-9-_]{25,})/);
+    const id = idMatch ? idMatch[1] : urlOrId;
+    if (urlOrId.includes("lh3.googleusercontent.com") || (!urlOrId.includes("drive.google.com") && !urlOrId.includes("google.com/open"))) {
+        return urlOrId;
+    }
+    return `https://lh3.googleusercontent.com/d/${id}`;
+};
+
 function ProjectsPage() {
     const supabase = useMemo(() => {
         return createBrowserClient(
@@ -91,7 +101,11 @@ function ProjectsPage() {
         setUploading(true);
         setError(null);
 
-        const projectData = { ...form, user_id: 1 };
+        const projectData = { 
+            ...form, 
+            image: getGDriveDirectLink(form.image),
+            user_id: 1 
+        };
 
         const { error: queryError } = currentProject
             ? await supabase.from("projects").update(projectData).eq("id", currentProject.id)

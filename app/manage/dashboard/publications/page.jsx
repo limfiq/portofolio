@@ -18,9 +18,22 @@ const slugify = (text) => {
         .toString()
         .toLowerCase()
         .trim()
-        .replace(/\s+/g, '-')     // Ganti spasi dengan -
-        .replace(/[^\w-]+/g, '')   // Hapus karakter non-word
-        .replace(/--+/g, '-');     // Ganti multiple - dengan single -
+        .replace(/\s+/g, '-')
+        .replace(/[^\w-]+/g, '')
+        .replace(/--+/g, '-');
+};
+
+const getGDriveDirectLink = (urlOrId) => {
+    if (!urlOrId) return "";
+    // Regex to extract ID from various GDrive URL formats
+    const idMatch = urlOrId.match(/(?:id=|\/d\/|folders\/)([a-zA-Z0-9-_]{25,})/);
+    const id = idMatch ? idMatch[1] : urlOrId;
+    
+    // If it's already a direct link or not a GDrive link, return as is
+    if (urlOrId.includes("lh3.googleusercontent.com") || (!urlOrId.includes("drive.google.com") && !urlOrId.includes("google.com/open"))) {
+        return urlOrId;
+    }
+    return `https://lh3.googleusercontent.com/d/${id}`;
 };
 
 const PublicationsPage = () => {
@@ -123,9 +136,9 @@ const PublicationsPage = () => {
         const publicationData = {
             ...form,
             slug: slugify(form.title),
-            cover_image: form.cover_image,
-            user_id: 1, // Hardcoded user_id, should be dynamic from auth
-            year: parseInt(form.year, 10) || null, // Ensure year is an integer or null
+            cover_image: getGDriveDirectLink(form.cover_image),
+            user_id: 1, // Tetap gunakan 1 jika kolom DB adalah bigint
+            year: parseInt(form.year, 10) || null,
         };
 
         const { error: queryError } = currentPublication
