@@ -24,7 +24,7 @@ const QuillEditor = ({ value, onChange, placeholder = "Mulai menulis di sini..."
   const formats = [
     'header',
     'bold', 'italic', 'underline', 'strike',
-    'list', 'bullet',
+    'list',
     'color', 'background',
     'link', 'image'
   ];
