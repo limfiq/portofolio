@@ -143,9 +143,9 @@ const PublicationsPage = () => {
         setUploading(false);
     };
 
-    const handleDelete = async (publicationId, imagePath) => {
-            const { error } = await supabase.from("publications").delete().eq("id", publicationId); // Changed table name
-
+    const handleDelete = async (publicationId) => {
+        if (window.confirm("Apakah Anda yakin ingin menghapus publikasi ini?")) {
+            const { error } = await supabase.from("publications").delete().eq("id", publicationId);
             if (error) setError(error.message);
             else {
                 fetchPublications(page);
