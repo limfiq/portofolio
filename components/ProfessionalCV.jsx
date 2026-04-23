@@ -49,7 +49,7 @@ const getGoogleDriveImageUrl = (imageIdentifier) => {
     return `https://drive.google.com/uc?export=view&id=${imageIdentifier}`;
 };
 
-const ProfessionalCV = ({ userId = 1 }) => {
+const ProfessionalCV = () => {
     const [profile, setProfile] = useState(null);
     const [educations, setEducations] = useState([]);
     const [awards, setAwards] = useState([]);
@@ -61,30 +61,43 @@ const ProfessionalCV = ({ userId = 1 }) => {
             try {
                 setLoading(true);
 
-                const [profileRes, educationsRes, awardsRes] = await Promise.all([
-                    supabase.from('users').select('name, photo, title, institution, biography, social_links').eq('id', userId).maybeSingle(),
-                    supabase.from('educations').select('*').eq('user_id', userId).order('end_year', { ascending: false }),
-                    supabase.from('awards').select('*').eq('user_id', userId).order('year', { ascending: false })
+                // Fetch the first user profile (assuming single-user portfolio)
+                const { data: userData, error: userError } = await supabase
+                    .from('users')
+                    .select('id, name, photo, title, institution, biography, social_links')
+                    .limit(1)
+                    .maybeSingle();
+
+                if (userError) throw userError;
+                if (!userData) {
+                    setLoading(false);
+                    return;
+                }
+
+                setProfile(userData);
+
+                // Fetch related data using the dynamic user ID
+                const [educationsRes, awardsRes] = await Promise.all([
+                    supabase.from('educations').select('*').eq('user_id', userData.id).order('end_year', { ascending: false }),
+                    supabase.from('awards').select('*').eq('user_id', userData.id).order('year', { ascending: false })
                 ]);
 
-                if (profileRes.error) throw profileRes.error;
                 if (educationsRes.error) throw educationsRes.error;
                 if (awardsRes.error) throw awardsRes.error;
 
-                setProfile(profileRes.data);
-                setEducations(educationsRes.data);
-                setAwards(awardsRes.data);
+                setEducations(educationsRes.data || []);
+                setAwards(awardsRes.data || []);
 
             } catch (err) {
                 console.error("Error fetching CV data:", err.message);
-                setError("Gagal memuat data CV.");
+                setError("Gagal memuat data CV. Silakan coba lagi nanti.");
             } finally {
                 setLoading(false);
             }
         };
 
         fetchData();
-    }, [userId]);
+    }, []);
 
     if (loading) return <p className="text-center py-20">Memuat CV...</p>;
     if (error) return <p className="text-center py-20 text-red-500">{error}</p>;

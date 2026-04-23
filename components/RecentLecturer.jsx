@@ -101,34 +101,37 @@ const RecentLecturer = () => {
                             <h3 className="text-2xl font-bold mb-4 border-b-2 border-blue-600 pb-2">
                                 Tahun Ajaran {year}
                             </h3>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full bg-white border border-gray-200">
-                                    <thead className="bg-gray-100">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mata Kuliah</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
-                                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">SKS</th>
-                                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Silabus</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200">
-                                        {courses.map((course) => (
-                                            <tr key={course.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                                                    {course.course_name}
-                                                    <p className="text-sm text-gray-500 font-normal">{stripHtml(course.description)}</p>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-gray-600">{course.semester}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center text-gray-600">{course.credits}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    <Link href={`/teaching/${course.id}`} className="text-blue-600 hover:underline font-medium">
-                                                        Lihat Materi & Silabus
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {courses.map((course) => (
+                                    <Link 
+                                        key={course.id} 
+                                        href={`/teaching/${course.id}`}
+                                        className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-6 flex flex-col h-full"
+                                    >
+                                        <div className="flex justify-between items-start mb-4">
+                                            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                                {course.semester}
+                                            </span>
+                                            <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded">
+                                                {course.credits} SKS
+                                            </span>
+                                        </div>
+                                        
+                                        <h4 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-3 line-clamp-2 leading-tight">
+                                            {course.course_name}
+                                        </h4>
+                                        
+                                        <p className="text-sm text-gray-500 line-clamp-3 mb-6 flex-grow">
+                                            {stripHtml(course.description)}
+                                        </p>
+                                        
+                                        <div className="pt-4 border-t border-gray-50 flex items-center justify-between mt-auto">
+                                            <span className="text-sm font-bold text-blue-600 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                                                Materi & Silabus <span>&rarr;</span>
+                                            </span>
+                                        </div>
+                                    </Link>
+                                ))}
                             </div>
                         </div>
                     ))}
