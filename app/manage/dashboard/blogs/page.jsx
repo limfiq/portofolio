@@ -34,7 +34,6 @@ function BlogsPage() {
     const [form, setForm] = useState({
         title: "", slug: "", content: "", tags: "", cover_image: "", status: "draft",
     });
-    const [imageFile, setImageFile] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [page, setPage] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
@@ -76,7 +75,6 @@ function BlogsPage() {
     const handleOpenModal = (blog = null) => {
         setCurrentBlog(blog);
         setForm(blog ? { ...blog } : { title: "", slug: "", content: "", tags: "", cover_image: "", status: "draft" });
-        setImageFile(null);
         setIsModalOpen(true);
     };
 
@@ -95,36 +93,13 @@ function BlogsPage() {
         setForm(newForm);
     };
 
-    const handleFileChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            setImageFile(e.target.files[0]);
-        }
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setUploading(true);
         setError(null);
 
-        let imageUrl = form.cover_image;
-
-        if (imageFile) {
-            const fileName = `${Date.now()}_${slugify(imageFile.name)}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from("portfolio-images")
-                .upload(`blogs/${fileName}`, imageFile, { upsert: true });
-
-            if (uploadError) {
-                setError(uploadError.message);
-                setUploading(false);
-                return;
-            }
-
-            const { data: urlData } = supabase.storage.from("portfolio-images").getPublicUrl(uploadData.path);
-            imageUrl = urlData.publicUrl;
-        }
-
-        const blogData = { ...form, cover_image: imageUrl };
+        const blogData = { ...form };
 
         try {
             const url = currentBlog ? `/api/blogs/${currentBlog.id}` : '/api/blogs';
@@ -144,12 +119,10 @@ function BlogsPage() {
                     const errorData = JSON.parse(errorText);
                     errorMessage = errorData.error || errorMessage;
                 } catch (e) {
-                    // If parsing fails, it's likely HTML (500 or 413)
                     console.error("Failed to parse error response JSON:", errorText);
-                    // Try to extract useful info if it's HTML, or just show status
                     errorMessage = `Server Error: ${response.status} ${response.statusText}`;
                     if (response.status === 413) {
-                        errorMessage = "Error: Content is too large (likely images). Please use the image uploader instead of pasting.";
+                        errorMessage = "Error: Content is too large. Please use the image uploader instead of pasting.";
                     }
                 }
                 throw new Error(errorMessage);
@@ -267,9 +240,9 @@ function BlogsPage() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Gambar Sampul</label>
-                                <input type="file" accept="image/*" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-                                {form.cover_image && !imageFile && <Image src={form.cover_image} alt="Preview" width={100} height={100} className="mt-2 rounded object-cover" />}
+                                <label className="block text-sm font-medium text-gray-700">Gambar Sampul (URL GDrive / ID)</label>
+                                <input type="text" name="cover_image" value={form.cover_image} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border" placeholder="Masukkan URL atau ID Google Drive" />
+                                {form.cover_image && <div className="mt-2 text-[10px] text-gray-400 break-all">{form.cover_image}</div>}
                             </div>
 
                             {error && <p className="text-red-500 text-sm">{error}</p>}

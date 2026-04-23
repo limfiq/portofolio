@@ -29,7 +29,6 @@ export default function ActivityPage() {
         link: "",
         cover_image: "",
     });
-    const [imageFile, setImageFile] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [page, setPage] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
@@ -76,7 +75,6 @@ export default function ActivityPage() {
                 ? { ...activity, slug: activity.slug || slugify(activity.title) }
                 : { title: "", slug: "", location: "", year: "", description: "", link: "", cover_image: "" }
         );
-        setImageFile(null);
         setIsModalOpen(true);
     };
 
@@ -103,40 +101,14 @@ export default function ActivityPage() {
         }
     };
 
-    const handleFileChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            setImageFile(e.target.files[0]);
-        }
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setUploading(true);
         setError(null);
 
-        let imageUrl = form.cover_image;
-
-        if (imageFile) {
-            const fileName = `${Date.now()}_${imageFile.name}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from("portfolio-images")
-                .upload(`community_services/${fileName}`, imageFile);
-
-            if (uploadError) {
-                setError(uploadError.message);
-                setUploading(false);
-                return;
-            }
-
-            const { data: urlData } = supabase.storage
-                .from("portfolio-images")
-                .getPublicUrl(uploadData.path);
-            imageUrl = urlData.publicUrl;
-        }
-
         const activityData = {
             ...form,
-            cover_image: imageUrl,
             user_id: 1, // Hardcode user_id sesuai skema
             year: parseInt(form.year, 10),
             slug: form.slug || slugify(form.title),
@@ -165,12 +137,6 @@ export default function ActivityPage() {
 
     const handleDelete = async (activityId, imagePath) => {
         if (window.confirm("Apakah Anda yakin ingin menghapus aktivitas ini?")) {
-            // Hapus gambar dari storage jika ada
-            if (imagePath) {
-                const pathParts = imagePath.split('/');
-                const fileName = pathParts[pathParts.length - 1];
-                await supabase.storage.from("portfolio-images").remove([`community_services/${fileName}`]);
-            }
 
             // Hapus data dari tabel
             const { error } = await supabase
@@ -289,9 +255,9 @@ export default function ActivityPage() {
                                     <input type="url" name="link" value={form.link} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700">Gambar Sampul</label>
-                                    <input type="file" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-                                    {form.cover_image && !imageFile && <Image src={form.cover_image} alt="Preview" width={100} height={100} className="mt-2 rounded" />}
+                                    <label className="block text-sm font-medium text-gray-700">Gambar Sampul (URL GDrive / ID)</label>
+                                    <input type="text" name="cover_image" value={form.cover_image} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border" placeholder="Masukkan URL atau ID Google Drive" />
+                                    {form.cover_image && <div className="mt-2 text-[10px] text-gray-400 break-all">{form.cover_image}</div>}
                                 </div>
                             </div>
                             {error && <p className="text-red-500 text-sm mt-4">{error}</p>}

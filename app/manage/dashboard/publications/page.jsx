@@ -40,7 +40,6 @@ const PublicationsPage = () => {
         authors: "",
         cover_image: "",
     });
-    const [imageFile, setImageFile] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [page, setPage] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
@@ -102,7 +101,6 @@ const PublicationsPage = () => {
             setForm(emptyForm);
         }
 
-        setImageFile(null);
         setIsModalOpen(true);
     };
 
@@ -117,46 +115,22 @@ const PublicationsPage = () => {
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleFileChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            setImageFile(e.target.files[0]);
-        }
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setUploading(true);
         setError(null);
 
-        let imageUrl = form.cover_image;
-
-        if (imageFile) {
-            const fileName = `${Date.now()}_${imageFile.name.replace(/\s/g, '_')}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from("portfolio-images")
-                .upload(`publications/${fileName}`, imageFile, { upsert: true }); // Changed folder
-
-            if (uploadError) {
-                setError(uploadError.message);
-                setUploading(false);
-                return;
-            }
-
-            const { data: urlData } = supabase.storage.from("portfolio-images").getPublicUrl(uploadData.path);
-            imageUrl = urlData.publicUrl;
-        }
-
         const publicationData = {
             ...form,
             slug: slugify(form.title),
-            cover_image: imageUrl,
+            cover_image: form.cover_image,
             user_id: 1, // Hardcoded user_id, should be dynamic from auth
             year: parseInt(form.year, 10) || null, // Ensure year is an integer or null
         };
 
         const { error: queryError } = currentPublication
-            ? await supabase.from("publications").update(publicationData).eq("id", currentPublication.id) // Changed table name
-            : await supabase.from("publications").insert(publicationData); // Changed table name
+            ? await supabase.from("publications").update(publicationData).eq("id", currentPublication.id)
+            : await supabase.from("publications").insert(publicationData);
 
         if (queryError) {
             console.error("Supabase Save Error:", queryError);
@@ -170,19 +144,6 @@ const PublicationsPage = () => {
     };
 
     const handleDelete = async (publicationId, imagePath) => {
-        if (window.confirm("Apakah Anda yakin ingin menghapus publikasi ini?")) {
-            if (imagePath) {
-                try {
-                    const url = new URL(imagePath);
-                    const path = url.pathname.split('/portfolio-images/')[1];
-                    if (path) {
-                        await supabase.storage.from("portfolio-images").remove([path]);
-                    }
-                } catch (e) {
-                    console.error("Failed to parse or delete image from storage:", e);
-                }
-            }
-
             const { error } = await supabase.from("publications").delete().eq("id", publicationId); // Changed table name
 
             if (error) setError(error.message);
@@ -299,9 +260,9 @@ const PublicationsPage = () => {
                                 <input type="text" name="authors" value={form.authors} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Gambar Sampul</label>
-                                <input type="file" accept="image/*" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-                                {form.cover_image && !imageFile && <Image src={form.cover_image} alt="Preview" width={100} height={100} className="mt-2 rounded object-cover" />}
+                                <label className="block text-sm font-medium text-gray-700">Gambar Sampul (URL GDrive / ID)</label>
+                                <input type="text" name="cover_image" value={form.cover_image} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border" placeholder="Masukkan URL atau ID Google Drive" />
+                                {form.cover_image && <div className="mt-2 text-[10px] text-gray-400 break-all">{form.cover_image}</div>}
                             </div>
 
                             {error && <p className="text-red-500 text-sm">{error}</p>}

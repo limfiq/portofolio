@@ -26,7 +26,6 @@ function ProjectsPage() {
         link: "",
         image: "",
     });
-    const [imageFile, setImageFile] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [page, setPage] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
@@ -72,7 +71,6 @@ function ProjectsPage() {
                 ? { ...project }
                 : { title: "", tech_stack: "", description: "", link: "", image: "" }
         );
-        setImageFile(null);
         setIsModalOpen(true);
     };
 
@@ -87,36 +85,13 @@ function ProjectsPage() {
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleFileChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            setImageFile(e.target.files[0]);
-        }
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setUploading(true);
         setError(null);
 
-        let imageUrl = form.image;
-
-        if (imageFile) {
-            const fileName = `${Date.now()}_${imageFile.name.replace(/\s/g, '_')}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from("portfolio-images")
-                .upload(`projects/${fileName}`, imageFile, { upsert: true });
-
-            if (uploadError) {
-                setError(uploadError.message);
-                setUploading(false);
-                return;
-            }
-
-            const { data: urlData } = supabase.storage.from("portfolio-images").getPublicUrl(uploadData.path);
-            imageUrl = urlData.publicUrl;
-        }
-
-        const projectData = { ...form, image: imageUrl, user_id: 1 };
+        const projectData = { ...form, user_id: 1 };
 
         const { error: queryError } = currentProject
             ? await supabase.from("projects").update(projectData).eq("id", currentProject.id)
@@ -132,14 +107,8 @@ function ProjectsPage() {
         setUploading(false);
     };
 
-    const handleDelete = async (projectId, imagePath) => {
+    const handleDelete = async (projectId) => {
         if (window.confirm("Apakah Anda yakin ingin menghapus proyek ini?")) {
-            if (imagePath) {
-                const pathParts = imagePath.split('/');
-                const fileName = pathParts.pop();
-                await supabase.storage.from("portfolio-images").remove([`projects/${fileName}`]);
-            }
-
             const { error } = await supabase.from("projects").delete().eq("id", projectId);
 
             if (error) setError(error.message);
@@ -227,9 +196,9 @@ function ProjectsPage() {
                                 <input type="url" name="link" value={form.link} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Gambar</label>
-                                <input type="file" accept="image/*" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-                                {form.image && !imageFile && <Image src={form.image} alt="Preview" width={100} height={100} className="mt-2 rounded object-cover" />}
+                                <label className="block text-sm font-medium text-gray-700">Gambar (URL GDrive / ID)</label>
+                                <input type="text" name="image" value={form.image} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border" placeholder="Masukkan URL atau ID Google Drive" />
+                                {form.image && <div className="mt-2 text-[10px] text-gray-400 break-all">{form.image}</div>}
                             </div>
 
                             {error && <p className="text-red-500 text-sm">{error}</p>}
