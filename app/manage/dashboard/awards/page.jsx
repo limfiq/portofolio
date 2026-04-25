@@ -190,19 +190,11 @@ const AwardsPage = () => {
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-500">{award.institution}</td>
                                         <td className="px-6 py-4 text-center text-sm text-gray-500 font-medium">{award.year}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button 
-                                                onClick={() => handleOpenModal(award)} 
-                                                className="text-blue-600 hover:text-blue-900 mr-4 font-bold"
-                                            >
-                                                Edit
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDelete(award.id)} 
-                                                className="text-red-600 hover:text-red-900 font-bold"
-                                            >
-                                                Hapus
-                                            </button>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <button onClick={() => handleOpenModal(award)} className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 transition-colors text-xs font-bold">Edit</button>
+                                                <button onClick={() => handleDelete(award.id)} className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors text-xs font-bold">Hapus</button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

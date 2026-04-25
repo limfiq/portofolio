@@ -143,8 +143,11 @@ export default function TeachingPage() {
                 <h1 className="text-2xl font-bold text-gray-800">Manajemen Pengajaran</h1>
                 <button
                     onClick={() => handleOpenModal()}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
                 >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
                     Tambah Pengajaran
                 </button>
             </div>
@@ -171,9 +174,11 @@ export default function TeachingPage() {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.semester}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.credits}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <Link href={`/manage/dashboard/teaching/${item.id}/materials`} className="text-green-600 hover:text-green-900 mr-4">Materi</Link>
-                                    <button onClick={() => handleOpenModal(item)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
-                                    <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-900">Hapus</button>
+                                    <div className="flex justify-end gap-2">
+                                        <Link href={`/manage/dashboard/teaching/${item.id}/materials`} className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition-colors text-xs font-bold">Materi</Link>
+                                        <button onClick={() => handleOpenModal(item)} className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 transition-colors text-xs font-bold">Edit</button>
+                                        <button onClick={() => handleDelete(item.id)} className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors text-xs font-bold">Hapus</button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
