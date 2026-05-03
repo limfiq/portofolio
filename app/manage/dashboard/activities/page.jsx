@@ -116,10 +116,17 @@ const getGDriveDirectLink = (urlOrId) => {
         setUploading(true);
         setError(null);
 
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            setError("Anda harus login untuk menyimpan data.");
+            setUploading(false);
+            return;
+        }
+
         const activityData = {
             ...form,
             cover_image: getGDriveDirectLink(form.cover_image),
-            user_id: 1, // Hardcode user_id sesuai skema
+            user_id: user.id,
             year: parseInt(form.year, 10),
             slug: form.slug || slugify(form.title),
         };

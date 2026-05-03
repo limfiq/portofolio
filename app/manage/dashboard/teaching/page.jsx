@@ -91,9 +91,16 @@ export default function TeachingPage() {
         setUploading(true);
         setError(null);
 
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            setError("Anda harus login untuk menyimpan data.");
+            setUploading(false);
+            return;
+        }
+
         const teachingData = {
             ...form,
-            user_id: 1,
+            user_id: user.id,
             credits: form.credits ? parseInt(form.credits, 10) : 0,
         };
 

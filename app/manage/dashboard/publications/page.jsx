@@ -133,11 +133,18 @@ const PublicationsPage = () => {
         setUploading(true);
         setError(null);
 
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            setError("Anda harus login untuk menyimpan data.");
+            setUploading(false);
+            return;
+        }
+
         const publicationData = {
             ...form,
             slug: slugify(form.title),
             cover_image: getGDriveDirectLink(form.cover_image),
-            user_id: 1, // Tetap gunakan 1 jika kolom DB adalah bigint
+            user_id: user.id,
             year: parseInt(form.year, 10) || null,
         };
 

@@ -101,10 +101,17 @@ function ProjectsPage() {
         setUploading(true);
         setError(null);
 
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            setError("Anda harus login untuk menyimpan data.");
+            setUploading(false);
+            return;
+        }
+
         const projectData = { 
             ...form, 
             image: getGDriveDirectLink(form.image),
-            user_id: 1 
+            user_id: user.id
         };
 
         const { error: queryError } = currentProject
