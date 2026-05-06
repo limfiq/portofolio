@@ -14,14 +14,27 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Portofolio M. Taufiq, M.Kom",
-  description: "Welcome to my personal portfolio website!",
+  title: "Portofolio M. Taufiq, M.Kom - Lecturer and Developer",
+  description: "Discover M. Taufiq, M.Kom's portfolio showcasing teaching, research, publications, projects, and academic activities in computer science and innovation.",
+  metadataBase: new URL("https://limfiq.my.id"),
+  alternates: {
+    canonical: "/",
+    languages: {
+      en: "/",
+    },
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   icons: {
     icon: "/favicon.ico",
   },
   openGraph: {
-    title: "Portofolio M. Taufiq, M.Kom",
-    description: "Welcome to my personal portfolio website!",
+    title: "Portofolio M. Taufiq, M.Kom - Lecturer and Developer",
+    description: "Discover M. Taufiq, M.Kom's portfolio showcasing teaching, research, publications, projects, and academic activities in computer science and innovation.",
+    url: "https://limfiq.my.id",
+    siteName: "Portofolio M. Taufiq, M.Kom",
     images: [
       {
         url: "/og-image.png",
@@ -44,6 +57,43 @@ export default function RootLayout({ children }) {
           <LayoutWrapper>
             {children}
           </LayoutWrapper>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@graph": [
+                  {
+                    "@type": "Person",
+                    name: "M. Taufiq, M.Kom",
+                    url: "https://limfiq.my.id",
+                    jobTitle: "Lecturer and Developer",
+                    description:
+                      "M. Taufiq, M.Kom is a computer science lecturer and developer showcasing teaching, research, publications, projects, and academic activities.",
+                    sameAs: [
+                      "https://limfiq.my.id"
+                    ],
+                  },
+                  {
+                    "@type": "Organization",
+                    name: "Portofolio M. Taufiq, M.Kom",
+                    url: "https://limfiq.my.id",
+                    sameAs: [
+                      "https://limfiq.my.id"
+                    ],
+                    logo: "https://limfiq.my.id/logo.png",
+                    contactPoint: [
+                      {
+                        "@type": "ContactPoint",
+                        contactType: "customer support",
+                        email: "info@limfiq.my.id"
+                      }
+                    ]
+                  }
+                ]
+              }),
+            }}
+          />
         </SupabaseProvider>
       </body>
     </html>
