@@ -19,7 +19,7 @@ export default function Home() {
                     <RecentPostsSection />
                 </Suspense>
                 <Suspense fallback={<div className="text-center py-10">Memuat aktivitas...</div>}>
-                    <RecentActivity />
+                    <RecentActivity isHomepage={true} />
                 </Suspense>
                 <Suspense fallback={<div className="text-center py-10">Memuat proyek...</div>}>
                     <RecentProject />
