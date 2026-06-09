@@ -73,7 +73,7 @@ const Page = async (props) => {
     return (
         <div className="max-w-4xl mx-auto pt-32 px-4 pb-12 overflow-hidden break-words">
             <div className="mb-12">
-                <a href="/activity" className="text-blue-600 hover:underline flex items-center gap-2 mb-8 group w-fit">
+                <a href="/penelitian-pengabdian" className="text-blue-600 hover:underline flex items-center gap-2 mb-8 group w-fit">
                     <span className="group-hover:-translate-x-1 transition-transform">&larr;</span> Kembali ke Daftar
                 </a>
                 

@@ -33,9 +33,8 @@ const Footer = () => {
                         <h3 className="text-white font-semibold mb-4">Tautan Cepat</h3>
                         <ul className="space-y-2">
                             <li><Link href="/about" className="hover:text-blue-400 transition-colors">Tentang Saya</Link></li>
-                            <li><Link href="/project" className="hover:text-blue-400 transition-colors">Proyek</Link></li>
+                            <li><Link href="/penelitian-pengabdian" className="hover:text-blue-400 transition-colors">Penelitian & Pengabdian</Link></li>
                             <li><Link href="/publications" className="hover:text-blue-400 transition-colors">Publikasi</Link></li>
-                            <li><Link href="/activity" className="hover:text-blue-400 transition-colors">Aktifitas</Link></li>
                             <li><Link href="/contact" className="hover:text-blue-400 transition-colors">Kontak</Link></li>
                         </ul>
                     </div>

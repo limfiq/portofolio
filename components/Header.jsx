@@ -20,9 +20,8 @@ const Header = () => {
   const navLinks = [
     { href: "/about", label: "Tentang" },
     { href: "/publications", label: "Publikasi" },
-    { href: "/activity", label: "Kegiatan" },
+    { href: "/penelitian-pengabdian", label: "Penelitian & Pengabdian" },
     { href: "/lecturer", label: "Pengajaran" },
-    { href: "/project", label: "Proyek" },
   ];
 
   return (
