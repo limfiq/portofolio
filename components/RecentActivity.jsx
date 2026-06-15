@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { supabase } from "../config/supabaseClient";
+import { CardSkeleton, DashboardSkeleton } from "./Skeleton";
 
 const stripHtml = (html) => {
     if (!html) return "";
@@ -47,51 +48,109 @@ const getGoogleDriveImageUrl = (imageIdentifier) => {
     return `https://drive.google.com/uc?export=view&id=${imageIdentifier}`;
 };
 
-// SVG Donut Chart Component for Activity Locations
-const DonutChart = ({ data }) => {
+// SVG Line Chart Component for Location Distribution
+const DistributionLineChart = ({ data }) => {
     const total = data.reduce((sum, item) => sum + item.value, 0);
     if (total === 0) {
         return (
-            <div className="flex items-center justify-center h-44 w-44 rounded-full border border-slate-100 bg-slate-50/50">
+            <div className="flex items-center justify-center h-32 w-full border border-slate-100 dark:border-slate-800/40 bg-slate-50/50 dark:bg-slate-900/50 rounded-2xl">
                 <span className="text-xs text-slate-400 italic">Tidak ada data</span>
             </div>
         );
     }
 
-    let accumulatedPercentage = 0;
-    const radius = 38;
-    const circumference = 2 * Math.PI * radius;
+    const maxVal = Math.max(...data.map(d => d.value), 2);
+    const width = 300;
+    const height = 150;
+    const paddingLeft = 30;
+    const paddingRight = 20;
+    const paddingTop = 20;
+    const paddingBottom = 30;
+
+    const chartWidth = width - paddingLeft - paddingRight;
+    const chartHeight = height - paddingTop - paddingBottom;
+
+    const getX = (index) => {
+        if (data.length <= 1) return paddingLeft + chartWidth / 2;
+        return paddingLeft + (index / (data.length - 1)) * chartWidth;
+    };
+    const getY = (val) => height - paddingBottom - (val / maxVal) * chartHeight;
+
+    const points = data.map((item, idx) => ({ 
+        x: getX(idx), 
+        y: getY(item.value), 
+        val: item.value, 
+        label: item.label, 
+        color: item.color 
+    }));
+    
+    const pathD = points.reduce((path, p, idx) => idx === 0 ? `M ${p.x} ${p.y}` : `${path} L ${p.x} ${p.y}`, "");
+    const areaPath = points.length > 0 && data.length > 1
+        ? `${pathD} L ${getX(points.length - 1)} ${height - paddingBottom} L ${getX(0)} ${height - paddingBottom} Z` 
+        : "";
+
+    // Generate abbreviations or short names for locations (e.g. Surabaya -> SBY, Sidoarjo -> SDA, Gresik -> GSK)
+    const getAbbreviation = (label) => {
+        if (!label) return "-";
+        if (label.toLowerCase() === "surabaya") return "SBY";
+        if (label.toLowerCase() === "sidoarjo") return "SDA";
+        if (label.toLowerCase() === "gresik") return "GSK";
+        if (label.toLowerCase() === "lainnya") return "Lain";
+        return label.substring(0, 3).toUpperCase();
+    };
 
     return (
-        <div className="relative w-44 h-44 flex items-center justify-center">
-            <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                {data.map((item) => {
-                    if (item.value === 0) return null;
-                    const percentage = (item.value / total) * 100;
-                    const strokeLength = (percentage / 100) * circumference;
-                    const strokeOffset = circumference - (accumulatedPercentage / 100) * circumference;
-                    accumulatedPercentage += percentage;
+        <div className="w-full">
+            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto overflow-visible">
+                <defs>
+                    <linearGradient id="gradDistAct" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2"/>
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity="0"/>
+                    </linearGradient>
+                </defs>
 
-                    return (
-                        <circle
-                            key={item.label}
-                            cx="50"
-                            cy="50"
-                            r={radius}
-                            fill="transparent"
-                            stroke={item.color}
-                            strokeWidth="11"
-                            strokeDasharray={`${strokeLength} ${circumference}`}
-                            strokeDashoffset={strokeOffset}
-                            className="transition-all duration-500 ease-out"
-                        />
-                    );
-                })}
+                {/* Grid Lines */}
+                {(() => {
+                    const seen = new Set();
+                    return [0, 0.5, 1].map((ratio) => {
+                        const val = Math.round(ratio * maxVal);
+                        if (seen.has(val)) return null;
+                        seen.add(val);
+                        const y = height - paddingBottom - ratio * chartHeight;
+                        return (
+                            <g key={ratio} className="opacity-40">
+                                <line x1={paddingLeft} y1={y} x2={width - paddingRight} y2={y} stroke="#cbd5e1" strokeWidth="1" strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-800/60" />
+                                <text x={paddingLeft - 6} y={y + 3} textAnchor="end" className="text-[9px] fill-slate-400 font-bold dark:fill-slate-500">{val}</text>
+                            </g>
+                        );
+                    }).filter(Boolean);
+                })()}
+
+                {/* X Axis Labels */}
+                {points.map((p, idx) => (
+                    <text key={idx} x={p.x} y={height - paddingBottom + 16} textAnchor="middle" className="text-[9px] fill-slate-500 font-bold dark:fill-slate-400">
+                        {getAbbreviation(p.label)}
+                    </text>
+                ))}
+
+                {/* Area under path */}
+                {areaPath && <path d={areaPath} fill="url(#gradDistAct)" />}
+
+                {/* Path */}
+                {pathD && data.length > 1 && <path d={pathD} fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+
+                {/* Data Points */}
+                {points.map((p, idx) => (
+                    <g key={idx}>
+                        <circle cx={p.x} cy={p.y} r="4" fill="#ffffff" stroke={p.color} strokeWidth="2.5" className="cursor-pointer" />
+                        {p.val > 0 && (
+                            <text x={p.x} y={p.y - 10} textAnchor="middle" className="text-[10px] font-bold fill-slate-700 dark:fill-slate-300">
+                                {p.val}
+                            </text>
+                        )}
+                    </g>
+                ))}
             </svg>
-            <div className="absolute flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold text-slate-800">{total}</span>
-                <span className="text-[9px] uppercase font-bold tracking-widest text-slate-400 mt-0.5">Total</span>
-            </div>
         </div>
     );
 };
@@ -130,16 +189,21 @@ const LineChart = ({ data }) => {
                 </defs>
 
                 {/* Grid Lines */}
-                {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
-                    const y = height - paddingBottom - ratio * chartHeight;
-                    const val = Math.round(ratio * maxVal);
-                    return (
-                        <g key={ratio} className="opacity-40">
-                            <line x1={paddingLeft} y1={y} x2={width - paddingRight} y2={y} stroke="#e2e8f0" strokeWidth="1" strokeDasharray="4 4" />
-                            <text x={paddingLeft - 8} y={y + 4} textAnchor="end" className="text-[10px] fill-slate-400 font-semibold">{val}</text>
-                        </g>
-                    );
-                })}
+                {(() => {
+                    const seen = new Set();
+                    return [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+                        const val = Math.round(ratio * maxVal);
+                        if (seen.has(val)) return null;
+                        seen.add(val);
+                        const y = height - paddingBottom - ratio * chartHeight;
+                        return (
+                            <g key={ratio} className="opacity-40">
+                                <line x1={paddingLeft} y1={y} x2={width - paddingRight} y2={y} stroke="#e2e8f0" strokeWidth="1" strokeDasharray="4 4" />
+                                <text x={paddingLeft - 8} y={y + 4} textAnchor="end" className="text-[10px] fill-slate-400 font-semibold">{val}</text>
+                            </g>
+                        );
+                    }).filter(Boolean);
+                })()}
 
                 {/* X Axis Labels */}
                 {data.labels.map((label, idx) => (
@@ -258,7 +322,31 @@ const RecentActivity = ({ isHomepage = false }) => {
         });
     }
 
-    if (loading) return <p className="text-center py-16">Memuat aktivitas...</p>;
+    if (loading) {
+        if (isHomepage) {
+            return (
+                <section className="bg-white py-16 rounded-2xl shadow-sm border border-slate-100/50">
+                    <div className="max-w-6xl mx-auto px-6">
+                        <div className="flex justify-between items-end mb-10">
+                            <div>
+                                <h2 className="text-3xl font-bold text-slate-900">Aktivitas Pengabdian</h2>
+                                <p className="text-slate-500 mt-2">Daftar kegiatan pengabdian masyarakat terbaru</p>
+                            </div>
+                            <div className="h-4 w-20 rounded bg-slate-200 dark:bg-slate-800 animate-shimmer"></div>
+                        </div>
+                        <CardSkeleton count={3} hasImage={true} />
+                    </div>
+                </section>
+            );
+        }
+        return (
+            <section className="bg-slate-50/30 dark:bg-slate-950/20 min-h-screen pb-16 pt-24">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                    <DashboardSkeleton />
+                </div>
+            </section>
+        );
+    }
     if (error) return <p className="text-center py-16 text-red-500">{error}</p>;
 
     // 1. Homepage Card Grid Layout
@@ -305,7 +393,7 @@ const RecentActivity = ({ isHomepage = false }) => {
                     src="/banner2.png"
                     alt="Aktivitas Pengabdian"
                     fill
-                    className="object-cover z-0"
+                    className="object-cover z-0 parallax-banner-image"
                     priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-900 to-cyan-600 opacity-70 z-10"></div>
@@ -408,8 +496,8 @@ const RecentActivity = ({ isHomepage = false }) => {
                             <h3 className="text-sm font-semibold text-slate-800">Peta Lokasi Mitra</h3>
                             <p className="text-xs text-slate-400 mt-0.5">Sebaran lokasi kegiatan pengabdian</p>
                         </div>
-                        <div className="flex justify-center items-center py-4">
-                            <DonutChart data={donutChartData} />
+                        <div className="flex justify-center items-center py-4 w-full">
+                            <DistributionLineChart data={donutChartData} />
                         </div>
                         
                         {/* Location details list */}

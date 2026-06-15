@@ -20,11 +20,12 @@ const Header = () => {
   const navLinks = [
     { href: "/about", label: "Tentang" },
     { href: "/publications", label: "Publikasi" },
-    { href: "/penelitian-pengabdian", label: "Penelitian & Pengabdian" },
+    { href: "/penelitian", label: "Penelitian" },
+    { href: "/pengabdian", label: "Pengabdian" },
     { href: "/lecturer", label: "Pengajaran" },
   ];
 
-  const isDarkPage = ["/publications", "/activity", "/penelitian-pengabdian", "/lecturer"].includes(pathname);
+  const isDarkPage = ["/publications", "/activity", "/penelitian-pengabdian", "/lecturer", "/penelitian", "/pengabdian", "/project"].includes(pathname);
   const isTextWhite = !isScrolled && isDarkPage;
 
   return (

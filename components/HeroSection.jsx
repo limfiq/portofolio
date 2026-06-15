@@ -5,8 +5,8 @@ const HeroSection = () => {
     return (
         <section className="relative pt-32 pb-20 overflow-hidden">
             {/* Background blobs */}
-            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
-            <div className="absolute top-0 right-40 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob parallax-blob-1"></div>
+            <div className="absolute top-0 right-40 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000 parallax-blob-2"></div>
 
             <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center relative z-10">
                 <div className="order-2 lg:order-1">
@@ -65,7 +65,7 @@ const HeroSection = () => {
                             alt="Foto M. Taufiq, M.Kom"
                             width={400}
                             height={400}
-                            className="relative w-72 h-72 md:w-96 md:h-96 rounded-[2rem] object-cover shadow-2xl border-4 border-white"
+                            className="relative w-72 h-72 md:w-96 md:h-96 rounded-[2rem] object-cover shadow-2xl"
                             priority
                         />
                         {/* Floating badges could go here */}
