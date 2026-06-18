@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "@/config/supabaseClient";
+import { CardSkeleton } from "./Skeleton";
 
 // Helper to strip HTML tags for clean descriptions
 const stripHtml = (html) => {
@@ -41,7 +42,7 @@ const getGDriveDirectLink = (urlOrId) => {
     return urlOrId;
 };
 
-export default function PenelitianPengabdianClient() {
+export default function PenelitianPengabdianClient({ defaultTab = "penelitian", hideTabs = false }) {
     const [researchList, setResearchList] = useState([]);
     const [communityList, setCommunityList] = useState([]);
     const [publicationsCount, setPublicationsCount] = useState(0);
@@ -49,7 +50,11 @@ export default function PenelitianPengabdianClient() {
     const [error, setError] = useState(null);
 
     // Tab state: "penelitian" or "pengabdian"
-    const [activeTab, setActiveTab] = useState("penelitian");
+    const [activeTab, setActiveTab] = useState(defaultTab);
+
+    useEffect(() => {
+        setActiveTab(defaultTab);
+    }, [defaultTab]);
 
     // Search & Filter states
     const [searchQuery, setSearchQuery] = useState("");
@@ -221,13 +226,45 @@ export default function PenelitianPengabdianClient() {
         return Math.max(...vals, 4);
     }, [chartData]);
 
+    const points = useMemo(() => {
+        return chartData.map((d, i) => {
+            const groupWidth = 500 / chartData.length;
+            const x = i * groupWidth + groupWidth / 2;
+            const val = activeTab === "penelitian" ? d.research : d.community;
+            const y = 200 - (val / maxVal) * 160;
+            return { x, y, val, year: d.year };
+        });
+    }, [chartData, activeTab, maxVal]);
+
+    const pathD = useMemo(() => {
+        return points.reduce((path, p, idx) => idx === 0 ? `M ${p.x} ${p.y}` : `${path} L ${p.x} ${p.y}`, "");
+    }, [points]);
+
+    const areaPath = useMemo(() => {
+        if (points.length === 0) return "";
+        return `${pathD} L ${points[points.length - 1].x} 200 L ${points[0].x} 200 Z`;
+    }, [points, pathD]);
+
     if (loading) {
         return (
-            <div className="w-full py-24 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-600 font-medium text-sm">Memuat data...</p>
+            <div className="w-full">
+                {/* Stats Cards placeholder */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-100 dark:border-slate-800/50 flex items-center justify-between h-28">
+                            <div className="space-y-2 w-full">
+                                <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-shimmer"></div>
+                                <div className="h-8 w-12 bg-slate-200 dark:bg-slate-800 rounded animate-shimmer"></div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
+                {/* Chart placeholder */}
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-md border border-slate-100 dark:border-slate-800/50 mb-12 h-72">
+                    <div className="w-full h-full bg-slate-100 dark:bg-slate-800/50 rounded-2xl animate-shimmer"></div>
+                </div>
+                {/* Cards Grid placeholder */}
+                <CardSkeleton count={6} hasImage={true} />
             </div>
         );
     }
@@ -251,150 +288,159 @@ export default function PenelitianPengabdianClient() {
     return (
         <div className="w-full">
             {/* Stats Cards Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100 flex items-center justify-between hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Penelitian</p>
-                        <h3 className="text-3xl font-black text-slate-800">{researchList.length}</h3>
-                        <p className="text-[11px] text-slate-500 font-medium mt-1">Proyek Riset Aktif & Selesai</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                    </div>
-                </div>
+            <div className={`grid grid-cols-1 md:grid-cols-2 ${hideTabs ? "lg:grid-cols-3" : "lg:grid-cols-4"} gap-6 mb-12`}>
+                {activeTab === "penelitian" ? (
+                    <>
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-100 dark:border-slate-800/50 flex items-center justify-between hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Penelitian</p>
+                                <h3 className="text-3xl font-black text-slate-800 dark:text-white">{researchList.length}</h3>
+                                <p className="text-[11px] text-slate-500 font-medium mt-1">Proyek Riset Aktif & Selesai</p>
+                            </div>
+                            <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                            </div>
+                        </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100 flex items-center justify-between hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Pengabdian</p>
-                        <h3 className="text-3xl font-black text-slate-800">{communityList.length}</h3>
-                        <p className="text-[11px] text-slate-500 font-medium mt-1">Aktivitas di Masyarakat</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                    </div>
-                </div>
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-100 dark:border-slate-800/50 flex items-center justify-between hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Publikasi Terkait</p>
+                                <h3 className="text-3xl font-black text-slate-800 dark:text-white">{publicationsCount}</h3>
+                                <p className="text-[11px] text-slate-500 font-medium mt-1">Jurnal, Prosiding & Buku</p>
+                            </div>
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                            </div>
+                        </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100 flex items-center justify-between hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Publikasi Terkait</p>
-                        <h3 className="text-3xl font-black text-slate-800">{publicationsCount}</h3>
-                        <p className="text-[11px] text-slate-500 font-medium mt-1">Jurnal, Prosiding & Buku</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
-                    </div>
-                </div>
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-100 dark:border-slate-800/50 flex items-center justify-between hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Mitra / Pendanaan</p>
+                                <h3 className="text-3xl font-black text-slate-800 dark:text-white">{filterOptions.fundingSources.length}</h3>
+                                <p className="text-[11px] text-slate-500 font-medium mt-1">Instansi & Skema Hibah</p>
+                            </div>
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-100 dark:border-slate-800/50 flex items-center justify-between hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Pengabdian</p>
+                                <h3 className="text-3xl font-black text-slate-800 dark:text-white">{communityList.length}</h3>
+                                <p className="text-[11px] text-slate-500 font-medium mt-1">Aktivitas di Masyarakat</p>
+                            </div>
+                            <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/30 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            </div>
+                        </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-100 flex items-center justify-between hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Mitra / Pendanaan</p>
-                        <h3 className="text-3xl font-black text-slate-800">{filterOptions.fundingSources.length}</h3>
-                        <p className="text-[11px] text-slate-500 font-medium mt-1">Instansi & Skema Hibah</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                </div>
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-100 dark:border-slate-800/50 flex items-center justify-between hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Lokasi Pengabdian</p>
+                                <h3 className="text-3xl font-black text-slate-800 dark:text-white">{filterOptions.locations.length}</h3>
+                                <p className="text-[11px] text-slate-500 font-medium mt-1">Mitra Wilayah Binaan</p>
+                            </div>
+                            <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Trend Chart Section */}
             {chartData.length > 0 && (
-                <div className="bg-white p-6 md:p-8 rounded-3xl shadow-md border border-slate-100 mb-12">
+                <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-3xl shadow-md border border-slate-100 dark:border-slate-800/50 mb-12">
                     <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                         <div>
-                            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                                <span className="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-                                Tren Kegiatan Penelitian & Pengabdian
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                <span className={`w-1.5 h-6 ${activeTab === "penelitian" ? "bg-blue-600" : "bg-teal-500"} rounded-full`}></span>
+                                {activeTab === "penelitian" ? "Tren Kegiatan Penelitian" : "Tren Kegiatan Pengabdian"}
                             </h2>
-                            <p className="text-xs text-slate-500 font-medium mt-1">Perbandingan jumlah proyek per tahun akademik</p>
+                            <p className="text-xs text-slate-500 font-medium mt-1">Jumlah proyek per tahun akademik</p>
                         </div>
                         
                         <div className="flex items-center gap-6">
-                            <div className="flex items-center gap-2">
-                                <span className="w-3.5 h-3.5 bg-blue-600 rounded-md"></span>
-                                <span className="text-xs font-bold text-slate-600">Penelitian</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="w-3.5 h-3.5 bg-teal-500 rounded-md"></span>
-                                <span className="text-xs font-bold text-slate-600">Pengabdian</span>
-                            </div>
+                            {activeTab === "penelitian" ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="w-3.5 h-3.5 bg-blue-600 rounded-md"></span>
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Penelitian</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <span className="w-3.5 h-3.5 bg-teal-500 rounded-md"></span>
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Pengabdian</span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     <div className="w-full overflow-x-auto">
                         <div className="min-w-[500px] h-64 relative">
                             <svg className="w-full h-full overflow-visible" viewBox={`0 0 500 200`}>
-                                <line x1="0" y1="0" x2="500" y2="0" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="4" />
-                                <line x1="0" y1="50" x2="500" y2="50" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="4" />
-                                <line x1="0" y1="100" x2="500" y2="100" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="4" />
-                                <line x1="0" y1="150" x2="500" y2="150" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="4" />
-                                <line x1="0" y1="200" x2="500" y2="200" stroke="#cbd5e1" strokeWidth="1.5" />
+                                <defs>
+                                    <linearGradient id="gradPenelitianPengabdian" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor={activeTab === "penelitian" ? "#2563eb" : "#14b8a6"} stopOpacity="0.2"/>
+                                        <stop offset="100%" stopColor={activeTab === "penelitian" ? "#2563eb" : "#14b8a6"} stopOpacity="0"/>
+                                    </linearGradient>
+                                </defs>
+                                <line x1="0" y1="0" x2="500" y2="0" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="4" className="stroke-slate-100 dark:stroke-slate-800/40" />
+                                <line x1="0" y1="50" x2="500" y2="50" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="4" className="stroke-slate-100 dark:stroke-slate-800/40" />
+                                <line x1="0" y1="100" x2="500" y2="100" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="4" className="stroke-slate-100 dark:stroke-slate-800/40" />
+                                <line x1="0" y1="150" x2="500" y2="150" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="4" className="stroke-slate-100 dark:stroke-slate-800/40" />
+                                <line x1="0" y1="200" x2="500" y2="200" stroke="#cbd5e1" strokeWidth="1.5" className="stroke-slate-300 dark:stroke-slate-700" />
 
-                                {chartData.map((d, i) => {
-                                    const groupWidth = 500 / chartData.length;
-                                    const xOffset = i * groupWidth + (groupWidth - 50) / 2;
-                                    
-                                    const resHeight = (d.research / maxVal) * 160;
-                                    const commHeight = (d.community / maxVal) * 160;
+                                {areaPath && <path d={areaPath} fill="url(#gradPenelitianPengabdian)" />}
+                                {pathD && (
+                                    <path 
+                                        d={pathD} 
+                                        fill="none" 
+                                        stroke={activeTab === "penelitian" ? "#2563eb" : "#14b8a6"} 
+                                        strokeWidth="3" 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round" 
+                                    />
+                                )}
 
-                                    return (
-                                        <g key={d.year}>
-                                            <rect
-                                                x={xOffset}
-                                                y={200 - resHeight}
-                                                width="22"
-                                                height={resHeight}
-                                                rx="4"
-                                                fill="#2563eb"
-                                                className="transition-all duration-500 hover:fill-blue-700 cursor-pointer"
+                                {points.map((p, idx) => (
+                                    <g key={idx}>
+                                        <circle
+                                            cx={p.x}
+                                            cy={p.y}
+                                            r="4.5"
+                                            fill="#ffffff"
+                                            stroke={activeTab === "penelitian" ? "#2563eb" : "#14b8a6"}
+                                            strokeWidth="3"
+                                            className="cursor-pointer transition-all duration-300 hover:scale-125"
+                                        >
+                                            <title>{`${activeTab === "penelitian" ? "Penelitian" : "Pengabdian"} ${p.year}: ${p.val} Proyek`}</title>
+                                        </circle>
+                                        {p.val > 0 && (
+                                            <text 
+                                                x={p.x} 
+                                                y={p.y - 12} 
+                                                textAnchor="middle" 
+                                                className="text-[10px] font-bold fill-slate-700 dark:fill-slate-200"
                                             >
-                                                <title>{`Penelitian ${d.year}: ${d.research} Proyek`}</title>
-                                            </rect>
-                                            {d.research > 0 && (
-                                                <text 
-                                                    x={xOffset + 11} 
-                                                    y={192 - resHeight} 
-                                                    textAnchor="middle" 
-                                                    fill="#1e3a8a" 
-                                                    className="text-[9px] font-bold"
-                                                >
-                                                    {d.research}
-                                                </text>
-                                            )}
-
-                                            <rect
-                                                x={xOffset + 26}
-                                                y={200 - commHeight}
-                                                width="22"
-                                                height={commHeight}
-                                                rx="4"
-                                                fill="#14b8a6"
-                                                className="transition-all duration-500 hover:fill-teal-600 cursor-pointer"
-                                            >
-                                                <title>{`Pengabdian ${d.year}: ${d.community} Proyek`}</title>
-                                            </rect>
-                                            {d.community > 0 && (
-                                                <text 
-                                                    x={xOffset + 37} 
-                                                    y={192 - commHeight} 
-                                                    textAnchor="middle" 
-                                                    fill="#042f2e" 
-                                                    className="text-[9px] font-bold"
-                                                >
-                                                    {d.community}
-                                                </text>
-                                            )}
-                                        </g>
-                                    );
-                                })}
+                                                {p.val}
+                                            </text>
+                                        )}
+                                    </g>
+                                ))}
                             </svg>
                             
                             <div className="absolute inset-x-0 bottom-[-25px] flex justify-between text-[11px] font-bold text-slate-400">
@@ -410,50 +456,52 @@ export default function PenelitianPengabdianClient() {
             )}
 
             {/* Segmented Tab Control */}
-            <div className="flex justify-center mb-8">
-                <div className="bg-slate-200/60 p-1.5 rounded-2xl flex gap-1 shadow-inner max-w-md w-full">
-                    <button
-                        onClick={() => {
-                            setActiveTab("penelitian");
-                            setSearchQuery("");
-                            setSelectedYear("");
-                            setSelectedRole("");
-                            setSelectedFunding("");
-                            setSelectedLocation("");
-                        }}
-                        className={`flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${
-                            activeTab === "penelitian"
-                                ? "bg-white text-blue-700 shadow-md transform scale-[1.02]"
-                                : "text-slate-600 hover:text-slate-900 hover:bg-white/30"
-                        }`}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                        Penelitian
-                    </button>
-                    <button
-                        onClick={() => {
-                            setActiveTab("pengabdian");
-                            setSearchQuery("");
-                            setSelectedYear("");
-                            setSelectedRole("");
-                            setSelectedFunding("");
-                            setSelectedLocation("");
-                        }}
-                        className={`flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${
-                            activeTab === "pengabdian"
-                                ? "bg-white text-teal-700 shadow-md transform scale-[1.02]"
-                                : "text-slate-600 hover:text-slate-900 hover:bg-white/30"
-                        }`}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        Pengabdian
-                    </button>
+            {!hideTabs && (
+                <div className="flex justify-center mb-8">
+                    <div className="bg-slate-200/60 p-1.5 rounded-2xl flex gap-1 shadow-inner max-w-md w-full">
+                        <button
+                            onClick={() => {
+                                setActiveTab("penelitian");
+                                setSearchQuery("");
+                                setSelectedYear("");
+                                setSelectedRole("");
+                                setSelectedFunding("");
+                                setSelectedLocation("");
+                            }}
+                            className={`flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${
+                                activeTab === "penelitian"
+                                    ? "bg-white text-blue-700 shadow-md transform scale-[1.02]"
+                                    : "text-slate-600 hover:text-slate-900 hover:bg-white/30"
+                            }`}
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                            Penelitian
+                        </button>
+                        <button
+                            onClick={() => {
+                                setActiveTab("pengabdian");
+                                setSearchQuery("");
+                                setSelectedYear("");
+                                setSelectedRole("");
+                                setSelectedFunding("");
+                                setSelectedLocation("");
+                            }}
+                            className={`flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${
+                                activeTab === "pengabdian"
+                                    ? "bg-white text-teal-700 shadow-md transform scale-[1.02]"
+                                    : "text-slate-600 hover:text-slate-900 hover:bg-white/30"
+                            }`}
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Pengabdian
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Filter and Search Panel */}
             <div className="bg-white p-6 rounded-3xl shadow-md border border-slate-100 mb-8 flex flex-col gap-6">

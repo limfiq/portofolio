@@ -20,9 +20,13 @@ const Header = () => {
   const navLinks = [
     { href: "/about", label: "Tentang" },
     { href: "/publications", label: "Publikasi" },
-    { href: "/penelitian-pengabdian", label: "Penelitian & Pengabdian" },
+    { href: "/penelitian", label: "Penelitian" },
+    { href: "/pengabdian", label: "Pengabdian" },
     { href: "/lecturer", label: "Pengajaran" },
   ];
+
+  const isDarkPage = ["/publications", "/activity", "/penelitian-pengabdian", "/lecturer", "/penelitian", "/pengabdian", "/project"].includes(pathname);
+  const isTextWhite = !isScrolled && isDarkPage;
 
   return (
     <header
@@ -34,7 +38,9 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
         <Link
           href="/"
-          className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-indigo-600 bg-clip-text text-transparent hover:opacity-80 transition-opacity"
+          className={`text-2xl font-bold bg-gradient-to-r bg-clip-text text-transparent hover:opacity-80 transition-opacity ${
+            isTextWhite ? "from-white to-blue-200" : "from-blue-700 to-indigo-600"
+          }`}
         >
           Portofolio
         </Link>
@@ -47,11 +53,16 @@ const Header = () => {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-sm font-medium transition-colors relative group ${isActive ? "text-blue-700" : "text-slate-600 hover:text-blue-700"
-                  }`}
+                className={`text-sm font-medium transition-colors relative group ${
+                  isTextWhite
+                    ? isActive ? "text-white" : "text-white/80 hover:text-white"
+                    : isActive ? "text-blue-700" : "text-slate-600 hover:text-blue-700"
+                }`}
               >
                 {link.label}
-                <span className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-700 transition-all duration-300 group-hover:w-full ${isActive ? "w-full" : ""}`}></span>
+                <span className={`absolute -bottom-1 left-0 w-0 h-0.5 transition-all duration-300 group-hover:w-full ${
+                  isTextWhite ? "bg-white" : "bg-blue-700"
+                } ${isActive ? "w-full" : ""}`}></span>
               </Link>
             )
           })}
@@ -66,7 +77,9 @@ const Header = () => {
         {/* Mobile Menu Button */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="md:hidden text-slate-700 hover:text-blue-700 focus:outline-none p-2"
+          className={`md:hidden focus:outline-none p-2 ${
+            isTextWhite ? "text-white hover:text-white/80" : "text-slate-700 hover:text-blue-700"
+          }`}
         >
           <div className="w-6 h-5 relative flex flex-col justify-between">
             <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${isMenuOpen ? "rotate-45 translate-y-2" : ""}`}></span>

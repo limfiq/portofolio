@@ -52,6 +52,8 @@ const PublicationsPage = () => {
         abstract: "",
         authors: "",
         cover_image: "",
+        index: "",
+        status: "Published",
     });
     const [uploading, setUploading] = useState(false);
     const [page, setPage] = useState(0);
@@ -103,6 +105,8 @@ const PublicationsPage = () => {
             abstract: "",
             authors: "",
             cover_image: "",
+            index: "",
+            status: "Published",
         };
 
         if (publication) {
@@ -140,12 +144,18 @@ const PublicationsPage = () => {
             return;
         }
 
+        // Detect if status changed to set status_changed timestamp
+        const statusChangedDate = (!currentPublication || form.status !== currentPublication.status)
+            ? new Date().toISOString()
+            : currentPublication.status_changed;
+
         const publicationData = {
             ...form,
             slug: slugify(form.title),
             cover_image: getGDriveDirectLink(form.cover_image),
             user_id: user.id,
             year: parseInt(form.year, 10) || null,
+            status_changed: statusChangedDate,
         };
 
         const { error: queryError } = currentPublication
@@ -199,9 +209,9 @@ const PublicationsPage = () => {
                     <thead className="bg-gray-50">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Judul</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slug</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipe / Indeks</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tahun</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipe</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
                         </tr>
                     </thead>
@@ -212,12 +222,23 @@ const PublicationsPage = () => {
                                     <div className="text-sm font-medium text-gray-900 break-words">{publication.title}</div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className={`text-xs font-mono px-2 py-1 rounded ${publication.slug ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                                        {publication.slug || "MISSING"}
-                                    </div>
+                                    <div className="text-sm text-gray-900">{publication.type}</div>
+                                    {publication.index && (
+                                        <div className="text-xs text-gray-500 font-semibold uppercase">{publication.index}</div>
+                                    )}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-500">{publication.year}</td>
-                                <td className="px-6 py-4 text-sm text-gray-500">{publication.type}</td>
+                                <td className="px-6 py-4 text-sm text-gray-500">
+                                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                                        publication.status === "Published" || publication.status === "Accepted"
+                                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                            : publication.status === "Draft"
+                                            ? "bg-slate-50 text-slate-500 border-slate-200"
+                                            : "bg-amber-50 text-amber-700 border-amber-200"
+                                    }`}>
+                                        {publication.status || "Published"}
+                                    </span>
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right">
                                     <div className="flex justify-end gap-2">
                                         <button onClick={() => handleOpenModal(publication)} className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 transition-colors text-xs font-bold">Edit</button>
@@ -241,63 +262,204 @@ const PublicationsPage = () => {
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <h2 className="text-xl font-bold mb-6">{currentPublication ? "Edit" : "Tambah"} Publikasi</h2>
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Judul</label>
-                                <input type="text" name="title" value={form.title} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Tahun</label>
-                                <input type="number" name="year" value={form.year} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Tipe Publikasi</label>
-                                <select name="type" value={form.type} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                                    <option value="Journal">Journal</option>
-                                    <option value="Conference">Conference</option>
-                                    <option value="Book Chapter">Book Chapter</option>
-                                    <option value="Proceeding">Proceeding</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Penerbit</label>
-                                <input type="text" name="publisher" value={form.publisher} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">DOI (Digital Object Identifier)</label>
-                                <input type="text" name="doi" value={form.doi} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Link</label>
-                                <input type="url" name="link" value={form.link} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Abstrak</label>
-                                <div className="mt-1">
-                                    <QuillEditor
-                                        value={form.abstract}
-                                        onChange={(content) => setForm(prev => ({ ...prev, abstract: content }))}
+                <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto transform transition-all scale-100 flex flex-col">
+                        {/* Header */}
+                        <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-5 flex items-center justify-between z-10">
+                            <h2 className="text-lg font-bold text-slate-800">
+                                {currentPublication ? "Edit Publikasi Ilmiah" : "Tambah Publikasi Baru"}
+                            </h2>
+                            <button 
+                                type="button" 
+                                onClick={handleCloseModal} 
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Form */}
+                        <form onSubmit={handleSubmit} className="p-6 space-y-6 flex-1">
+                            {/* Section 1: Utama */}
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Judul Publikasi</label>
+                                    <input 
+                                        type="text" 
+                                        name="title" 
+                                        value={form.title} 
+                                        onChange={handleInputChange} 
+                                        className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 font-semibold" 
+                                        required 
+                                        placeholder="Masukkan judul publikasi lengkap..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Penulis / Kontributor (pisahkan dengan koma)</label>
+                                    <input 
+                                        type="text" 
+                                        name="authors" 
+                                        value={form.authors} 
+                                        onChange={handleInputChange} 
+                                        className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800" 
+                                        placeholder="Contoh: Dr. John Doe, Prof. Jane Smith, M.T." 
                                     />
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Penulis (pisahkan dengan koma)</label>
-                                <input type="text" name="authors" value={form.authors} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Gambar Sampul (URL GDrive / ID)</label>
-                                <input type="text" name="cover_image" value={form.cover_image} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border" placeholder="Masukkan URL atau ID Google Drive" />
-                                {form.cover_image && <div className="mt-2 text-[10px] text-gray-400 break-all">{form.cover_image}</div>}
+
+                            {/* Section 2: Kategorisasi & Alur Kerja */}
+                            <div className="border-t border-slate-100 pt-5">
+                                <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-3.5">Kategorisasi & Alur Kerja</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Tipe Publikasi</label>
+                                        <select 
+                                            name="type" 
+                                            value={form.type} 
+                                            onChange={handleInputChange} 
+                                            className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 bg-white"
+                                        >
+                                            <option value="Journal">Journal</option>
+                                            <option value="Conference">Conference</option>
+                                            <option value="Book Chapter">Book Chapter</option>
+                                            <option value="Proceeding">Proceeding</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Indeks (misal: Scopus Q1, Sinta 2)</label>
+                                        <input 
+                                            type="text" 
+                                            name="index" 
+                                            value={form.index} 
+                                            onChange={handleInputChange} 
+                                            className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800" 
+                                            placeholder="Masukkan indeks publikasi..." 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Status Publikasi</label>
+                                        <select 
+                                            name="status" 
+                                            value={form.status} 
+                                            onChange={handleInputChange} 
+                                            className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 bg-white"
+                                        >
+                                            <option value="Draft">Draft</option>
+                                            <option value="Ready To Submit">Ready To Submit</option>
+                                            <option value="Submitted">Submitted</option>
+                                            <option value="Under Review">Under Review</option>
+                                            <option value="Revision Requested">Revision Requested</option>
+                                            <option value="Accepted">Accepted</option>
+                                            <option value="Rejected">Rejected</option>
+                                            <option value="Published">Published</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
 
-                            {error && <p className="text-red-500 text-sm">{error}</p>}
+                            {/* Section 3: Penerbit & Tautan */}
+                            <div className="border-t border-slate-100 pt-5">
+                                <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-3.5">Detail Penerbit & Tautan</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Tahun Terbit</label>
+                                        <input 
+                                            type="number" 
+                                            name="year" 
+                                            value={form.year} 
+                                            onChange={handleInputChange} 
+                                            className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800" 
+                                            placeholder="Contoh: 2026" 
+                                        />
+                                    </div>
+                                    <div className="sm:col-span-2">
+                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Nama Penerbit / Jurnal</label>
+                                        <input 
+                                            type="text" 
+                                            name="publisher" 
+                                            value={form.publisher} 
+                                            onChange={handleInputChange} 
+                                            className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800" 
+                                            placeholder="Contoh: IEEE Transactions, Springer, Journal IGS" 
+                                        />
+                                    </div>
+                                    <div className="sm:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 mb-1.5">DOI (Digital Object Identifier)</label>
+                                            <input 
+                                                type="text" 
+                                                name="doi" 
+                                                value={form.doi} 
+                                                onChange={handleInputChange} 
+                                                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800" 
+                                                placeholder="Contoh: 10.1109/ACCESS.2026.123456" 
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 mb-1.5">Tautan URL Asli</label>
+                                            <input 
+                                                type="url" 
+                                                name="link" 
+                                                value={form.link} 
+                                                onChange={handleInputChange} 
+                                                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800" 
+                                                placeholder="Contoh: https://journal.igsindonesia.org/..." 
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                            <div className="flex justify-end gap-4 pt-4">
-                                <button type="button" onClick={handleCloseModal} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Batal</button>
-                                <button type="submit" disabled={uploading} className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:bg-blue-300">
+                            {/* Section 4: Abstrak & Media */}
+                            <div className="border-t border-slate-100 pt-5">
+                                <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-3.5">Abstrak & Media</h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Abstrak Publikasi</label>
+                                        <div className="mt-1 border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+                                            <QuillEditor
+                                                value={form.abstract}
+                                                onChange={(content) => setForm(prev => ({ ...prev, abstract: content }))}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1.5">Gambar Sampul (URL / ID Google Drive)</label>
+                                        <input 
+                                            type="text" 
+                                            name="cover_image" 
+                                            value={form.cover_image} 
+                                            onChange={handleInputChange} 
+                                            className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800" 
+                                            placeholder="Masukkan URL Google Drive atau ID berkas gambar" 
+                                        />
+                                        {form.cover_image && (
+                                            <div className="mt-2 text-[10px] font-mono text-slate-400 bg-slate-50 p-2.5 rounded-lg break-all">
+                                                {form.cover_image}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {error && <p className="text-red-500 text-sm bg-red-50 border border-red-100 p-4 rounded-xl">{error}</p>}
+
+                            {/* Actions */}
+                            <div className="flex justify-end gap-3 pt-5 border-t border-slate-100">
+                                <button 
+                                    type="button" 
+                                    onClick={handleCloseModal} 
+                                    className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 font-semibold text-sm active:scale-95 transition-all"
+                                >
+                                    Batal
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    disabled={uploading} 
+                                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl disabled:bg-blue-300 font-semibold text-sm shadow-lg shadow-blue-100 active:scale-95 transition-all flex items-center gap-2"
+                                >
                                     {uploading ? "Menyimpan..." : "Simpan"}
                                 </button>
                             </div>

@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { supabase } from "../config/supabaseClient";
+import { CardSkeleton } from "./Skeleton";
 
 // --- KOMPONEN KECIL (Helper & UI) ---
 
@@ -154,7 +155,7 @@ const RecentPostsSection = () => {
                     src="/banner5.png"
                     alt="Tulisan Terbaru"
                     fill
-                    className="object-cover z-0"
+                    className="object-cover z-0 parallax-banner-image"
                     priority // Banner penting untuk LCP
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-red-900 to-orange-600 opacity-70 z-10"></div>
@@ -166,7 +167,7 @@ const RecentPostsSection = () => {
             <div className="max-w-6xl mx-auto px-6 mt-8" id="blog-grid">
                 {/* Tampilkan loading state atau error di dalam area konten */}
                 {loading && blogs.length === 0 ? (
-                    <p className="text-center py-16 text-gray-500">Memuat tulisan...</p>
+                    <CardSkeleton count={3} hasImage={true} />
                 ) : error ? (
                     <p className="text-center py-16 text-red-500">{error}</p>
                 ) : blogs.length === 0 ? (

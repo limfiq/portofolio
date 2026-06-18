@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../config/supabaseClient"; // Pastikan path ini benar
+import { CardSkeleton } from "./Skeleton";
 
 const stripHtml = (html) => {
     if (!html) return "";
@@ -135,7 +136,22 @@ const RecentProject = () => {
         fetchProjects();
     }, [currentPage]);
 
-    if (loading && projects.length === 0) return <p className="text-center py-16">Memuat proyek riset...</p>;
+    if (loading && projects.length === 0) {
+        return (
+            <section className="bg-white py-16">
+                {/* Banner Section - Full Width */}
+                <div className="relative h-48 md:h-64 mb-12 overflow-hidden shadow-lg">
+                    <div className="absolute inset-0 bg-gradient-to-r from-green-900 to-teal-600 opacity-70 z-10"></div>
+                    <div className="relative z-20 flex items-center justify-center h-full">
+                        <h2 className="text-4xl md:text-5xl font-bold text-white text-center px-4">Proyek Riset</h2>
+                    </div>
+                </div>
+                <div className="max-w-6xl mx-auto px-6 mt-8">
+                    <CardSkeleton count={3} hasImage={true} />
+                </div>
+            </section>
+        );
+    }
     if (error) return <p className="text-center py-16 text-red-500">{error}</p>;
     if (!loading && projects.length === 0) return <p className="text-center py-16">Belum ada proyek riset terbaru.</p>;
 
@@ -148,7 +164,7 @@ const RecentProject = () => {
                     alt="Proyek Riset Terbaru"
                     layout="fill"
                     objectFit="cover"
-                    className="z-0"
+                    className="z-0 parallax-banner-image"
                 />
                 {/* Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-r from-green-900 to-teal-600 opacity-70 z-10"></div>
