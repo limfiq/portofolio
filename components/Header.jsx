@@ -45,14 +45,21 @@ const Header = () => {
   };
 
   const navLinks = [
-    { href: "/about", label: "Tentang" },
-    { href: "/publications", label: "Publikasi" },
-    { href: "/penelitian", label: "Penelitian" },
-    { href: "/pengabdian", label: "Pengabdian" },
+    { href: "/project", label: "Proyek Riset" },
+    { 
+      label: "PPM",
+      submenu: [
+        { href: "/publications", label: "Publikasi" },
+        { href: "/penelitian", label: "Penelitian" },
+        { href: "/pengabdian", label: "Pengabdian" },
+      ]
+    },
     { href: "/lecturer", label: "Pengajaran" },
+    { href: "/blog", label: "Tulisan" },
+    { href: "/loker", label: "Loker IT" },
   ];
 
-  const isDarkPage = ["/publications", "/activity", "/penelitian-pengabdian", "/lecturer", "/penelitian", "/pengabdian", "/project"].includes(pathname);
+  const isDarkPage = ["/publications", "/activity", "/penelitian-pengabdian", "/lecturer", "/penelitian", "/pengabdian", "/project", "/loker", "/blog"].includes(pathname);
   const isTextWhite = !isScrolled && isDarkPage;
 
   return (
@@ -75,19 +82,45 @@ const Header = () => {
         {/* Desktop Menu */}
         <div className="hidden md:flex gap-8 items-center">
           {navLinks.map((link) => {
+            if (link.submenu) {
+              const isSubActive = link.submenu.some(sub => pathname === sub.href);
+              return (
+                <div key={link.label} className="relative group">
+                  <button className={`flex items-center gap-1 text-sm font-medium transition-colors py-2 ${
+                    isTextWhite
+                      ? isSubActive ? "text-white" : "text-white/80 hover:text-white"
+                      : isSubActive ? "text-blue-700 dark:text-blue-400" : "text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400"
+                  }`}>
+                    {link.label}
+                    <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                    <span className={`absolute bottom-0 left-0 w-0 h-0.5 transition-all duration-300 group-hover:w-full ${
+                      isTextWhite ? "bg-white" : "bg-blue-700 dark:bg-blue-400"
+                    } ${isSubActive ? "w-full" : ""}`}></span>
+                  </button>
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 overflow-hidden transform origin-top-left scale-95 group-hover:scale-100 flex flex-col z-50">
+                    {link.submenu.map(sub => (
+                      <Link key={sub.href} href={sub.href} className={`px-4 py-3 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 ${pathname === sub.href ? 'text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20' : 'text-slate-700 dark:text-slate-300'}`}>
+                        {sub.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
             const isActive = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-sm font-medium transition-colors relative group ${
+                className={`text-sm font-medium transition-colors relative group py-2 ${
                   isTextWhite
                     ? isActive ? "text-white" : "text-white/80 hover:text-white"
                     : isActive ? "text-blue-700 dark:text-blue-400" : "text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400"
                 }`}
               >
                 {link.label}
-                <span className={`absolute -bottom-1 left-0 w-0 h-0.5 transition-all duration-300 group-hover:w-full ${
+                <span className={`absolute bottom-0 left-0 w-0 h-0.5 transition-all duration-300 group-hover:w-full ${
                   isTextWhite ? "bg-white" : "bg-blue-700 dark:bg-blue-400"
                 } ${isActive ? "w-full" : ""}`}></span>
               </Link>
@@ -168,17 +201,37 @@ const Header = () => {
           }`}
         style={{ top: "80px" }}
       >
-        <div className="flex flex-col p-8 gap-6 text-center">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-lg font-medium text-slate-700 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {link.label}
-            </Link>
-          ))}
+        <div className="flex flex-col p-8 gap-6 text-center overflow-y-auto h-full pb-32">
+          {navLinks.map((link) => {
+            if (link.submenu) {
+              return (
+                <div key={link.label} className="flex flex-col items-center gap-4">
+                  <span className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{link.label}</span>
+                  {link.submenu.map(sub => (
+                    <Link
+                      key={sub.href}
+                      href={sub.href}
+                      className="text-lg font-medium text-slate-700 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {sub.label}
+                    </Link>
+                  ))}
+                  <div className="w-12 h-px bg-slate-200 dark:bg-slate-700 mt-2"></div>
+                </div>
+              );
+            }
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-lg font-medium text-slate-700 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
           <Link
             href="/contact"
             onClick={() => setIsMenuOpen(false)}

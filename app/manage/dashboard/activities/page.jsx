@@ -28,6 +28,8 @@ export default function ActivityPage() {
         description: "",
         link: "",
         cover_image: "",
+        jenis_luaran: "",
+        status: "",
     });
     const [uploading, setUploading] = useState(false);
     const [page, setPage] = useState(0);
@@ -73,7 +75,7 @@ export default function ActivityPage() {
         setForm(
             activity
                 ? { ...activity, slug: activity.slug || slugify(activity.title) }
-                : { title: "", slug: "", location: "", year: "", description: "", link: "", cover_image: "" }
+                : { title: "", slug: "", location: "", year: "", description: "", link: "", cover_image: "", jenis_luaran: "", status: "" }
         );
         setIsModalOpen(true);
     };
@@ -197,6 +199,7 @@ const getGDriveDirectLink = (urlOrId) => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tahun</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                         </tr>
                     </thead>
@@ -208,6 +211,13 @@ const getGDriveDirectLink = (urlOrId) => {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{activity.location}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{activity.year}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {activity.status && (
+                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${activity.status.toLowerCase() === 'selesai' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                            {activity.status}
+                                        </span>
+                                    )}
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right">
                                     <div className="flex justify-end gap-2">
                                         <button onClick={() => handleOpenModal(activity)} className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 transition-colors text-xs font-bold">Edit</button>
@@ -262,6 +272,18 @@ const getGDriveDirectLink = (urlOrId) => {
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Tahun</label>
                                     <input type="number" name="year" value={form.year} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Jenis Luaran</label>
+                                    <input type="text" name="jenis_luaran" value={form.jenis_luaran || ""} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="Contoh: Laporan, Jurnal" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                                    <select name="status" value={form.status || ""} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-white py-2 px-3">
+                                        <option value="">Pilih Status</option>
+                                        <option value="Selesai">Selesai</option>
+                                        <option value="Berjalan">Berjalan</option>
+                                    </select>
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
