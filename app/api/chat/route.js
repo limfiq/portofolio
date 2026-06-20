@@ -71,7 +71,7 @@ You are an AI assistant representing M. Taufiq, M.Kom, a professional IT develop
 - **Dosen Berprestasi I (2024):** Penghargaan internal dari Sekolah Tinggi Ilmu Komputer Banyuwangi.
 
 ### SOCIAL LINKS & CONTACTS
-- Email: mtaufiq39@gmail.com
+- Email: ufiq@limfiq.my.id
 - LinkedIn: https://linkedin.com/in/limfiq
 - GitHub: https://github.com/limfiq
 - SINTA Profile: https://sinta.kemdiktisaintek.go.id/authors/profile/6000762
