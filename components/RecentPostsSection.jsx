@@ -5,26 +5,31 @@ import { useState, useEffect } from "react";
 import { supabase } from "../config/supabaseClient";
 import { CardSkeleton } from "./Skeleton";
 
-// --- KOMPONEN KECIL (Helper & UI) ---
-
 const PostCard = ({ title, description, slug, imageUrl }) => (
-    <div className="bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow flex flex-col h-full">
-        {/* Tambahkan relative wrapper untuk Image agar fill berfungsi baik */}
-        <div className="relative w-full h-48">
+    <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 shadow-sm hover:shadow-xl rounded-2xl overflow-hidden hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
+        <div className="relative w-full h-48 bg-slate-100 dark:bg-slate-800">
              <Image
                 src={imageUrl}
                 alt={title}
                 fill
-                className="object-cover"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
             />
         </div>
         <div className="p-6 flex flex-col flex-grow">
-            <h3 className="text-xl font-semibold mb-2 line-clamp-2">{title}</h3>
-            <p className="text-gray-600 mb-4 flex-grow line-clamp-3">{description}</p>
-            <Link href={`/blog/${slug}`} className="font-semibold text-blue-600 hover:underline mt-auto">
-                Baca Selengkapnya &rarr;
-            </Link>
+            <h3 className="text-lg font-bold text-slate-850 dark:text-slate-100 mb-2 line-clamp-2 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                {title}
+            </h3>
+            
+            <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm mb-6 flex-grow line-clamp-3 leading-relaxed">
+                {description}
+            </p>
+            
+            <div className="pt-4 border-t border-slate-50 dark:border-slate-800/50 mt-auto">
+                <Link href={`/blog/${slug}`} className="font-bold text-xs text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1.5">
+                    Baca Selengkapnya <span>&rarr;</span>
+                </Link>
+            </div>
         </div>
     </div>
 );
@@ -32,13 +37,11 @@ const PostCard = ({ title, description, slug, imageUrl }) => (
 const PaginationControls = ({ currentPage, totalPages, onPageChange, loading }) => {
     const hasPrev = currentPage > 1;
     const hasNext = currentPage < totalPages;
-
-    // Style dasar tombol
-    const btnBase = "px-4 py-2 rounded font-semibold transition-colors";
+    const btnBase = "px-4 py-2 rounded-lg font-semibold text-xs transition-colors shadow-sm select-none active:scale-95";
     const btnActive = "bg-blue-600 text-white hover:bg-blue-700";
-    const btnDisabled = "bg-gray-200 text-gray-500 cursor-not-allowed";
+    const btnDisabled = "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed";
 
-    if (totalPages <= 1) return null; // Sembunyikan jika hanya 1 halaman
+    if (totalPages <= 1) return null;
 
     return (
         <div className="flex justify-center items-center gap-4 mt-12">
@@ -49,11 +52,9 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, loading }) 
             >
                 &laquo; Sebelumnya
             </button>
-
-            <span className="text-gray-700 font-medium">
+            <span className="text-slate-600 dark:text-slate-350 text-xs font-semibold">
                 Halaman {currentPage} dari {totalPages}
             </span>
-
             <button
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={!hasNext || loading}
@@ -71,39 +72,38 @@ const getGoogleDriveImageUrl = (imageIdentifier) => {
     return `https://drive.google.com/uc?export=view&id=${imageIdentifier}`;
 };
 
-// --- KOMPONEN UTAMA ---
-
-const RecentPostsSection = () => {
+const RecentPostsSection = ({ isHomepage = false }) => {
     const [blogs, setBlogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    // State baru untuk paginasi
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
-    const POSTS_PER_PAGE = 3;
+    const POSTS_PER_PAGE = isHomepage ? 3 : 9;
 
-    // Fungsi fetch data yang menerima parameter 'page'
     const fetchBlogs = async (page) => {
         setLoading(true);
         setError(null);
         try {
-            // Hitung range untuk paginasi Supabase
             const from = (page - 1) * POSTS_PER_PAGE;
             const to = from + POSTS_PER_PAGE - 1;
 
-            const { data, error, count } = await supabase
+            let query = supabase
                 .from('blogs')
-                .select('id, title, slug, content, cover_image', { count: 'exact' }) // Minta total hitungan
+                .select('id, title, slug, content, cover_image', { count: 'exact' })
                 .eq('status', 'published')
-                .order('created_at', { ascending: false })
-                .range(from, to); // Terapkan range
+                .order('created_at', { ascending: false });
+
+            if (isHomepage) {
+                query = query.limit(3);
+            } else {
+                query = query.range(from, to);
+            }
+
+            const { data, error, count } = await query;
 
             if (error) throw error;
-
-            setBlogs(data);
-            // Hitung total halaman dari 'count' yang didapat
-            if (count) {
+            setBlogs(data || []);
+            if (!isHomepage && count) {
                 setTotalPages(Math.ceil(count / POSTS_PER_PAGE));
             }
         } catch (err) {
@@ -114,25 +114,20 @@ const RecentPostsSection = () => {
         }
     };
 
-    // Panggil fetch saat komponen pertama kali dimuat ATAU saat currentPage berubah
     useEffect(() => {
         fetchBlogs(currentPage);
-    }, [currentPage]);
+    }, [currentPage, isHomepage]);
 
-    // Fungsi handler saat tombol paginasi diklik
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= totalPages) {
             setCurrentPage(newPage);
-            // Opsional: Scroll ke atas grid saat pindah halaman
             document.getElementById('blog-grid')?.scrollIntoView({ behavior: 'smooth' });
         }
     };
 
     const truncateContent = (content, maxLength = 100) => {
         if (!content) return '';
-        // Hapus tag HTML
         const plainText = content.replace(/<[^>]+>/g, '');
-        // Decode HTML entities (seperti &nbsp;)
         const entities = {
             '&nbsp;': ' ',
             '&amp;': '&',
@@ -147,16 +142,60 @@ const RecentPostsSection = () => {
         return decodedText.substring(0, maxLength) + '...';
     };
 
+    if (loading && blogs.length === 0) return <p className="text-center py-16 text-slate-500">Memuat tulisan...</p>;
+    if (error) return <p className="text-center py-16 text-red-500">{error}</p>;
+    if (blogs.length === 0) return <p className="text-center py-16 text-slate-500">Belum ada tulisan terbaru.</p>;
+
+    // 1. Homepage Minimalist View
+    if (isHomepage) {
+        return (
+            <section className="py-24 bg-slate-50/50 dark:bg-slate-900/10 border-t border-slate-100 dark:border-slate-850/50">
+                <div className="max-w-6xl mx-auto px-6">
+                    <div className="flex justify-between items-end mb-12">
+                        <div>
+                            <span className="text-blue-600 dark:text-blue-400 font-bold tracking-wider text-xs uppercase mb-3 block">
+                                Artikel & Berita
+                            </span>
+                            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white leading-tight">
+                                Pemikiran & Catatan Terbaru
+                            </h2>
+                        </div>
+                        <Link 
+                            href="/blog" 
+                            className="text-sm font-semibold text-blue-600 dark:text-blue-450 hover:underline flex items-center gap-1 group"
+                        >
+                            Lihat Semua Artikel
+                            <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                        </Link>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {blogs.map((blog) => (
+                            <PostCard
+                                key={blog.id}
+                                title={blog.title}
+                                description={truncateContent(blog.content)}
+                                slug={blog.slug}
+                                imageUrl={getGoogleDriveImageUrl(blog.cover_image)}
+                            />
+                        ))}
+                    </div>
+                </div>
+            </section>
+        );
+    }
+
+    // 2. Full Listing View (For `/blog` Page)
     return (
-        <section className="bg-white py-16">
+        <section className="bg-slate-50/30 dark:bg-slate-950/20 min-h-screen pb-16">
             {/* Banner Section */}
-            <div className="relative h-24 md:h-64 mb-12 overflow-hidden shadow-lg">
+            <div className="relative h-48 md:h-64 mb-12 overflow-hidden shadow-lg">
                 <Image
                     src="/banner5.png"
                     alt="Tulisan Terbaru"
                     fill
-                    className="object-cover z-0 parallax-banner-image"
-                    priority // Banner penting untuk LCP
+                    priority
+                    className="object-cover z-0"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-red-900 to-orange-600 opacity-70 z-10"></div>
                 <div className="relative z-20 flex items-center justify-center h-full">
@@ -165,37 +204,23 @@ const RecentPostsSection = () => {
             </div>
 
             <div className="max-w-6xl mx-auto px-6 mt-8" id="blog-grid">
-                {/* Tampilkan loading state atau error di dalam area konten */}
-                {loading && blogs.length === 0 ? (
-                    <CardSkeleton count={3} hasImage={true} />
-                ) : error ? (
-                    <p className="text-center py-16 text-red-500">{error}</p>
-                ) : blogs.length === 0 ? (
-                    <p className="text-center py-16 text-gray-500">Belum ada tulisan terbaru.</p>
-                ) : (
-                    <>
-                        {/* Grid Postingan */}
-                        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 ${loading ? 'opacity-50 transition-opacity' : ''}`}>
-                            {blogs.map((blog) => (
-                                <PostCard
-                                    key={blog.id}
-                                    title={blog.title}
-                                    description={truncateContent(blog.content)}
-                                    slug={blog.slug}
-                                    imageUrl={getGoogleDriveImageUrl(blog.cover_image)}
-                                />
-                            ))}
-                        </div>
-
-                        {/* Kontrol Paginasi */}
-                        <PaginationControls
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={handlePageChange}
-                            loading={loading}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {blogs.map((blog) => (
+                        <PostCard
+                            key={blog.id}
+                            title={blog.title}
+                            description={truncateContent(blog.content)}
+                            slug={blog.slug}
+                            imageUrl={getGoogleDriveImageUrl(blog.cover_image)}
                         />
-                    </>
-                )}
+                    ))}
+                </div>
+                <PaginationControls
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    loading={loading}
+                />
             </div>
         </section>
     );

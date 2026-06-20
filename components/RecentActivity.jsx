@@ -20,20 +20,27 @@ const stripHtml = (html) => {
 };
 
 const PostCard = ({ title, description, slug, imageUrl, location, year }) => (
-    <div className="bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow flex flex-col h-full">
-        <div className="relative h-48 w-full">
-            <Image src={imageUrl} alt={title} fill className="object-cover" />
+    <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 shadow-sm hover:shadow-xl rounded-2xl overflow-hidden hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
+        <div className="relative h-48 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <Image 
+                src={imageUrl} 
+                alt={title} 
+                fill 
+                className="object-cover group-hover:scale-105 transition-transform duration-500" 
+            />
         </div>
-        <div className="p-6 flex flex-col flex-1">
-            <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
-                <span className="truncate pr-2 font-medium">{location}</span>
-                <span className="flex-shrink-0 font-medium">{year}</span>
+        <div className="p-6 flex flex-col flex-grow">
+            <div className="flex justify-between items-center text-xs font-semibold text-slate-400 dark:text-slate-500 mb-3">
+                <span className="truncate pr-2">{location}</span>
+                <span className="flex-shrink-0">{year}</span>
             </div>
-            <h3 className="text-xl font-semibold mb-2 line-clamp-2 text-slate-800">{title}</h3>
-            <p className="text-gray-600 mb-4 line-clamp-3 text-sm flex-1">{stripHtml(description)}</p>
-            <Link href={`/activity/${slug}`} className="font-semibold text-blue-600 hover:underline inline-flex items-center gap-1 mt-auto">
-                Baca Selengkapnya &rarr;
-            </Link>
+            <h3 className="text-lg font-bold text-slate-850 dark:text-slate-100 mb-2 line-clamp-2 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{title}</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm mb-6 line-clamp-3 leading-relaxed flex-grow">{stripHtml(description)}</p>
+            <div className="pt-4 border-t border-slate-50 dark:border-slate-800/50 mt-auto">
+                <Link href={`/activity/${slug}`} className="font-bold text-xs text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1.5">
+                    Baca Selengkapnya <span>&rarr;</span>
+                </Link>
+            </div>
         </div>
     </div>
 );
@@ -353,15 +360,19 @@ const RecentActivity = ({ isHomepage = false }) => {
     if (isHomepage) {
         if (activities.length === 0) return null;
         return (
-            <section className="bg-white py-16 rounded-2xl shadow-sm border border-slate-100/50">
+            <section className="py-24 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-850/50">
                 <div className="max-w-6xl mx-auto px-6">
-                    <div className="flex justify-between items-end mb-10">
+                    <div className="flex justify-between items-end mb-12">
                         <div>
-                            <h2 className="text-3xl font-bold text-slate-900">Aktivitas Pengabdian</h2>
-                            <p className="text-slate-500 mt-2">Daftar kegiatan pengabdian masyarakat terbaru</p>
+                            <span className="text-blue-600 dark:text-blue-400 font-bold tracking-wider text-xs uppercase mb-3 block">
+                                Kontribusi Sosial
+                            </span>
+                            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white leading-tight">
+                                Aktivitas Pengabdian Masyarakat
+                            </h2>
                         </div>
-                        <Link href="/activity" className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 group">
-                            Lihat Semua 
+                        <Link href="/activity" className="text-sm font-semibold text-blue-600 dark:text-blue-450 hover:underline flex items-center gap-1 group">
+                            Lihat Semua Kegiatan
                             <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
                         </Link>
                     </div>
