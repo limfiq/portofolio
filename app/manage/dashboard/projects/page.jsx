@@ -2,6 +2,7 @@
 
 import { useCallback, useState, useEffect, useMemo } from "react";
 import { createBrowserClient } from "@supabase/ssr";
+import Link from "next/link";
 import Image from "next/image";
 import QuillEditor from "@/components/QuillEditor";
 
@@ -108,8 +109,8 @@ function ProjectsPage() {
             return;
         }
 
-        const projectData = { 
-            ...form, 
+        const projectData = {
+            ...form,
             image: getGDriveDirectLink(form.image),
             user_id: user.id
         };
@@ -146,8 +147,8 @@ function ProjectsPage() {
         <div className="p-4 md:p-6">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Manajemen Proyek</h1>
-                <button 
-                    onClick={() => handleOpenModal()} 
+                <button
+                    onClick={() => handleOpenModal()}
                     className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,6 +179,7 @@ function ProjectsPage() {
                                 <td className="px-6 py-4 text-sm text-gray-500">{project.tech_stack}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right">
                                     <div className="flex justify-end gap-2">
+                                        <Link href={`/project/${project.slug}`} className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors text-xs font-bold">Detail</Link>
                                         <button onClick={() => handleOpenModal(project)} className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 transition-colors text-xs font-bold">Edit</button>
                                         <button onClick={() => handleDelete(project.id, project.image)} className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors text-xs font-bold">Hapus</button>
                                     </div>

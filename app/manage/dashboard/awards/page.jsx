@@ -17,6 +17,7 @@ const AwardsPage = () => {
     const [error, setError] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentAward, setCurrentAward] = useState(null);
+    const [detailAward, setDetailAward] = useState(null);
     const [form, setForm] = useState({
         title: "",
         institution: "",
@@ -147,8 +148,8 @@ const AwardsPage = () => {
                     <h1 className="text-2xl font-bold text-gray-800">Manajemen Penghargaan</h1>
                     <p className="text-gray-500 text-sm">Kelola daftar penghargaan dan prestasi Anda.</p>
                 </div>
-                <button 
-                    onClick={() => handleOpenModal()} 
+                <button
+                    onClick={() => handleOpenModal()}
                     className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,7 +164,7 @@ const AwardsPage = () => {
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
                 </div>
             )}
-            
+
             {error && <p className="text-red-500 bg-red-100 p-4 rounded-xl mb-6">{error}</p>}
 
             {!loading && awards.length === 0 ? (
@@ -192,6 +193,7 @@ const AwardsPage = () => {
                                         <td className="px-6 py-4 text-center text-sm text-gray-500 font-medium">{award.year}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
                                             <div className="flex justify-end gap-2">
+                                                <button onClick={() => setDetailAward(award)} className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors text-xs font-bold">Detail</button>
                                                 <button onClick={() => handleOpenModal(award)} className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 transition-colors text-xs font-bold">Edit</button>
                                                 <button onClick={() => handleDelete(award.id)} className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors text-xs font-bold">Hapus</button>
                                             </div>
@@ -203,9 +205,9 @@ const AwardsPage = () => {
                     </div>
 
                     <div className="flex justify-between items-center mt-8">
-                        <button 
-                            onClick={() => setPage(p => Math.max(0, p - 1))} 
-                            disabled={page === 0 || loading} 
+                        <button
+                            onClick={() => setPage(p => Math.max(0, p - 1))}
+                            disabled={page === 0 || loading}
                             className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl disabled:opacity-50 hover:bg-gray-50 transition-all font-medium"
                         >
                             Sebelumnya
@@ -213,9 +215,9 @@ const AwardsPage = () => {
                         <span className="text-sm text-gray-500 font-medium">
                             Halaman <span className="text-gray-900 font-bold">{page + 1}</span> dari <span className="text-gray-900 font-bold">{totalPages || 1}</span>
                         </span>
-                        <button 
-                            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} 
-                            disabled={page >= totalPages - 1 || loading} 
+                        <button
+                            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                            disabled={page >= totalPages - 1 || loading}
                             className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl disabled:opacity-50 hover:bg-gray-50 transition-all font-medium"
                         >
                             Selanjutnya
@@ -239,37 +241,37 @@ const AwardsPage = () => {
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">Judul Penghargaan</label>
-                                <input 
-                                    type="text" 
-                                    name="title" 
-                                    value={form.title} 
-                                    onChange={handleInputChange} 
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
+                                <input
+                                    type="text"
+                                    name="title"
+                                    value={form.title}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                                     placeholder="Contoh: Best Paper Award"
-                                    required 
+                                    required
                                 />
                             </div>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">Institusi Pemberi</label>
-                                    <input 
-                                        type="text" 
-                                        name="institution" 
-                                        value={form.institution} 
-                                        onChange={handleInputChange} 
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
+                                    <input
+                                        type="text"
+                                        name="institution"
+                                        value={form.institution}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                                         placeholder="Contoh: LLDIKTI VII"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">Tahun</label>
-                                    <input 
-                                        type="number" 
-                                        name="year" 
-                                        value={form.year} 
-                                        onChange={handleInputChange} 
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
+                                    <input
+                                        type="number"
+                                        name="year"
+                                        value={form.year}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                                         placeholder="Contoh: 2024"
                                     />
                                 </div>
@@ -288,16 +290,16 @@ const AwardsPage = () => {
                             {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
 
                             <div className="flex justify-end gap-4 pt-8">
-                                <button 
-                                    type="button" 
-                                    onClick={handleCloseModal} 
+                                <button
+                                    type="button"
+                                    onClick={handleCloseModal}
                                     className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-all font-bold"
                                 >
                                     Batal
                                 </button>
-                                <button 
-                                    type="submit" 
-                                    disabled={submitting} 
+                                <button
+                                    type="submit"
+                                    disabled={submitting}
                                     className="px-6 py-3 bg-blue-600 text-white rounded-xl disabled:bg-blue-300 shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all font-bold"
                                 >
                                     {submitting ? "Menyimpan..." : "Simpan Data"}

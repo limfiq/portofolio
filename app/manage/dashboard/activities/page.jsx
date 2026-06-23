@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import QuillEditor from "@/components/QuillEditor";
 
@@ -93,15 +94,15 @@ export default function ActivityPage() {
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/^-+|-+$/g, "");
 
-const getGDriveDirectLink = (urlOrId) => {
-    if (!urlOrId) return "";
-    const idMatch = urlOrId.match(/(?:id=|\/d\/|folders\/)([a-zA-Z0-9-_]{25,})/);
-    const id = idMatch ? idMatch[1] : urlOrId;
-    if (urlOrId.includes("lh3.googleusercontent.com") || (!urlOrId.includes("drive.google.com") && !urlOrId.includes("google.com/open"))) {
-        return urlOrId;
-    }
-    return `https://lh3.googleusercontent.com/d/${id}`;
-};
+    const getGDriveDirectLink = (urlOrId) => {
+        if (!urlOrId) return "";
+        const idMatch = urlOrId.match(/(?:id=|\/d\/|folders\/)([a-zA-Z0-9-_]{25,})/);
+        const id = idMatch ? idMatch[1] : urlOrId;
+        if (urlOrId.includes("lh3.googleusercontent.com") || (!urlOrId.includes("drive.google.com") && !urlOrId.includes("google.com/open"))) {
+            return urlOrId;
+        }
+        return `https://lh3.googleusercontent.com/d/${id}`;
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -178,8 +179,8 @@ const getGDriveDirectLink = (urlOrId) => {
         <div className="p-4 md:p-6">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Manajemen Aktivitas</h1>
-                <button 
-                    onClick={() => handleOpenModal()} 
+                <button
+                    onClick={() => handleOpenModal()}
                     className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -220,6 +221,7 @@ const getGDriveDirectLink = (urlOrId) => {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right">
                                     <div className="flex justify-end gap-2">
+                                        <Link href={`/activity/${activity.slug}`} className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors text-xs font-bold">Detail</Link>
                                         <button onClick={() => handleOpenModal(activity)} className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 transition-colors text-xs font-bold">Edit</button>
                                         <button onClick={() => handleDelete(activity.id, activity.cover_image)} className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors text-xs font-bold">Hapus</button>
                                     </div>
