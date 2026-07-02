@@ -182,6 +182,7 @@ export default function TeachingPage() {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.credits}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div className="flex justify-end gap-2">
+                                        <Link href={`/teaching/${item.id}`} className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors text-xs font-bold">Detail</Link>
                                         <Link href={`/manage/dashboard/teaching/${item.id}/materials`} className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition-colors text-xs font-bold">Materi</Link>
                                         <button onClick={() => handleOpenModal(item)} className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 transition-colors text-xs font-bold">Edit</button>
                                         <button onClick={() => handleDelete(item.id)} className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors text-xs font-bold">Hapus</button>

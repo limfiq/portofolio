@@ -95,6 +95,16 @@ const Page = async (props) => {
                         </svg>
                         {data.location}
                     </span>
+                    {data.jenis_luaran && (
+                        <span className="bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-sm font-medium">
+                            {data.jenis_luaran}
+                        </span>
+                    )}
+                    {data.status && (
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${data.status.toLowerCase() === 'selesai' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                            {data.status}
+                        </span>
+                    )}
                     <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-medium">
                         Tahun {data.year}
                     </span>

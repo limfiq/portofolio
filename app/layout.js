@@ -53,6 +53,23 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
         suppressHydrationWarning={true}
       >
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function() {
+              try {
+                var theme = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (theme === 'dark' || (!theme && prefersDark)) {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              } catch (e) {
+                console.warn('Theme init failed', e);
+              }
+            })();`,
+          }}
+        />
         <SupabaseProvider>
           <LayoutWrapper>
             {children}

@@ -624,7 +624,7 @@ export default function PenelitianPengabdianClient({ defaultTab = "penelitian", 
             </div>
 
             {/* Showcase Grid */}
-            {filteredItems.length === 0 ? (
+            {filteredItems.length === 0 && activeTab !== "pengabdian" ? (
                 <div className="bg-white rounded-3xl p-16 border border-slate-100 shadow-md text-center max-w-2xl mx-auto">
                     <div className="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -650,6 +650,46 @@ export default function PenelitianPengabdianClient({ defaultTab = "penelitian", 
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {activeTab === "pengabdian" && (
+                        <div key="static-onprogress" className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1.5">
+                            <div className="relative h-48 w-full bg-slate-100 overflow-hidden group">
+                                <Image src="/banner2.png" alt="Pengabdian On Progress" fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                                <div className="absolute top-4 left-4">
+                                    <span className="px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider shadow-sm backdrop-blur-sm bg-yellow-500/90 text-white">
+                                        Berjalan
+                                    </span>
+                                </div>
+                                <div className="absolute bottom-4 right-4">
+                                    <span className="px-3 py-1 bg-slate-900/80 backdrop-blur-sm text-white text-[10px] font-bold rounded-full font-mono shadow-sm">
+                                        Tahun {new Date().getFullYear()}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="p-6 flex flex-col flex-grow">
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                    <div className="flex items-center gap-1 bg-teal-50 text-teal-700 text-[10px] font-bold rounded-md w-fit px-2.5 py-1 uppercase tracking-wider">
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        <span className="truncate max-w-[200px]">Jawa Timur</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-md w-fit px-2.5 py-1 uppercase tracking-wider">
+                                        <span className="truncate max-w-[200px]">Laporan & Produk</span>
+                                    </div>
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-800 line-clamp-2 leading-snug mb-3 hover:text-teal-600 transition-colors">
+                                    Pemberdayaan Masyarakat melalui Pemanfaatan Teknologi Tepat Guna
+                                </h3>
+                                <div className="text-slate-600 text-xs leading-relaxed mb-4 flex-grow">
+                                    <p className="line-clamp-3">Program pengabdian masyarakat yang sedang berjalan dengan fokus pada penerapan teknologi informasi untuk membantu UMKM lokal.</p>
+                                </div>
+                                <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-4 mt-auto">
+                                    <span className="text-xs font-bold text-slate-400 italic">Data dummy</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     {filteredItems.map((item) => {
                         const isExpanded = !!expandedCards[item.id];
                         
@@ -751,6 +791,13 @@ export default function PenelitianPengabdianClient({ defaultTab = "penelitian", 
                                             fill
                                             className="object-cover group-hover:scale-105 transition-transform duration-500"
                                         />
+                                        {item.status && (
+                                            <div className="absolute top-4 left-4">
+                                                <span className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider shadow-sm backdrop-blur-sm ${item.status.toLowerCase() === 'selesai' ? 'bg-green-600/90 text-white' : 'bg-yellow-500/90 text-white'}`}>
+                                                    {item.status}
+                                                </span>
+                                            </div>
+                                        )}
                                         <div className="absolute bottom-4 right-4">
                                             <span className="px-3 py-1 bg-slate-900/80 backdrop-blur-sm text-white text-[10px] font-bold rounded-full font-mono shadow-sm">
                                                 Tahun {item.year}
@@ -759,15 +806,22 @@ export default function PenelitianPengabdianClient({ defaultTab = "penelitian", 
                                     </div>
 
                                     <div className="p-6 flex flex-col flex-grow">
-                                        {item.location && (
-                                            <div className="flex items-center gap-1 bg-teal-50 text-teal-700 text-[10px] font-bold rounded-md w-fit px-2.5 py-1 mb-3 uppercase tracking-wider">
-                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                                <span className="truncate max-w-[200px]">{item.location}</span>
-                                            </div>
-                                        )}
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            {item.location && (
+                                                <div className="flex items-center gap-1 bg-teal-50 text-teal-700 text-[10px] font-bold rounded-md w-fit px-2.5 py-1 uppercase tracking-wider">
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
+                                                    <span className="truncate max-w-[200px]">{item.location}</span>
+                                                </div>
+                                            )}
+                                            {item.jenis_luaran && (
+                                                <div className="flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-md w-fit px-2.5 py-1 uppercase tracking-wider">
+                                                    <span className="truncate max-w-[200px]">{item.jenis_luaran}</span>
+                                                </div>
+                                            )}
+                                        </div>
 
                                         <h3 className="text-lg font-bold text-slate-800 line-clamp-2 leading-snug mb-3 hover:text-teal-600 transition-colors">
                                             <Link href={`/activity/${item.slug || item.id}`}>

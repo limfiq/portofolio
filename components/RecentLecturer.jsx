@@ -75,7 +75,7 @@ const RecentLecturer = () => {
 
     if (loading) {
         return (
-            <section className="bg-white py-16">
+            <section className="bg-slate-50/30 dark:bg-slate-950/20 min-h-screen pb-16">
                 {/* Banner Section - Full Width */}
                 <div className="relative h-48 md:h-64 mb-12 overflow-hidden shadow-lg">
                     <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-slate-700 opacity-70 z-10"></div>
@@ -93,7 +93,7 @@ const RecentLecturer = () => {
     if (Object.keys(groupedTeachings).length === 0) return <p className="text-center py-16">Belum ada data mengajar terbaru.</p>;
 
     return (
-        <section className="bg-white py-16">
+        <section className="bg-slate-50/30 dark:bg-slate-950/20 min-h-screen pb-16">
             {/* Banner Section - Full Width */}
             <div className="relative h-48 md:h-64 mb-12 overflow-hidden shadow-lg">
                 <Image
@@ -114,7 +114,7 @@ const RecentLecturer = () => {
                 <div className="space-y-12">
                     {Object.entries(groupedTeachings).map(([year, courses]) => (
                         <div key={year}>
-                            <h3 className="text-2xl font-bold mb-4 border-b-2 border-blue-600 pb-2">
+                            <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4 border-b-2 border-blue-600 pb-2">
                                 Tahun Ajaran {year}
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -122,27 +122,27 @@ const RecentLecturer = () => {
                                     <Link 
                                         key={course.id} 
                                         href={`/teaching/${course.id}`}
-                                        className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-6 flex flex-col h-full"
+                                        className="group bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-6 flex flex-col h-full"
                                     >
                                         <div className="flex justify-between items-start mb-4">
-                                            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                            <span className="px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 rounded-full text-[10px] font-bold uppercase tracking-wider">
                                                 {course.semester}
                                             </span>
-                                            <span className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded">
+                                            <span className="text-xs font-bold text-gray-400 dark:text-slate-400 bg-gray-50 dark:bg-slate-800 px-2 py-1 rounded">
                                                 {course.credits} SKS
                                             </span>
                                         </div>
                                         
-                                        <h4 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-3 line-clamp-2 leading-tight">
+                                        <h4 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-3 line-clamp-2 leading-tight">
                                             {course.course_name}
                                         </h4>
                                         
-                                        <p className="text-sm text-gray-500 line-clamp-3 mb-6 flex-grow">
+                                        <p className="text-sm text-gray-500 dark:text-slate-400 line-clamp-3 mb-6 flex-grow">
                                             {stripHtml(course.description)}
                                         </p>
                                         
-                                        <div className="pt-4 border-t border-gray-50 flex items-center justify-between mt-auto">
-                                            <span className="text-sm font-bold text-blue-600 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                                        <div className="pt-4 border-t border-gray-50 dark:border-slate-800/60 flex items-center justify-between mt-auto">
+                                            <span className="text-sm font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
                                                 Materi & Silabus <span>&rarr;</span>
                                             </span>
                                         </div>

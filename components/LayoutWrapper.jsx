@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AIChatbot from "@/components/AIChatbot";
 
 export default function LayoutWrapper({ children }) {
     const pathname = usePathname();
@@ -14,13 +15,14 @@ export default function LayoutWrapper({ children }) {
         return <>{children}</>;
     }
 
-    // In public pages, render standard layout with Header and Footer
+    // In public pages, render standard layout with Header, Footer and floating AIChatbot
     return (
         <>
             <Header />
             <main className="flex-grow">
                 {children}
             </main>
+            <AIChatbot />
             <Footer />
         </>
     );

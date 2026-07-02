@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import QuillEditor from "@/components/QuillEditor";
 
@@ -28,6 +29,8 @@ export default function ActivityPage() {
         description: "",
         link: "",
         cover_image: "",
+        jenis_luaran: "",
+        status: "",
     });
     const [uploading, setUploading] = useState(false);
     const [page, setPage] = useState(0);
@@ -73,7 +76,7 @@ export default function ActivityPage() {
         setForm(
             activity
                 ? { ...activity, slug: activity.slug || slugify(activity.title) }
-                : { title: "", slug: "", location: "", year: "", description: "", link: "", cover_image: "" }
+                : { title: "", slug: "", location: "", year: "", description: "", link: "", cover_image: "", jenis_luaran: "", status: "" }
         );
         setIsModalOpen(true);
     };
@@ -91,15 +94,15 @@ export default function ActivityPage() {
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/^-+|-+$/g, "");
 
-const getGDriveDirectLink = (urlOrId) => {
-    if (!urlOrId) return "";
-    const idMatch = urlOrId.match(/(?:id=|\/d\/|folders\/)([a-zA-Z0-9-_]{25,})/);
-    const id = idMatch ? idMatch[1] : urlOrId;
-    if (urlOrId.includes("lh3.googleusercontent.com") || (!urlOrId.includes("drive.google.com") && !urlOrId.includes("google.com/open"))) {
-        return urlOrId;
-    }
-    return `https://lh3.googleusercontent.com/d/${id}`;
-};
+    const getGDriveDirectLink = (urlOrId) => {
+        if (!urlOrId) return "";
+        const idMatch = urlOrId.match(/(?:id=|\/d\/|folders\/)([a-zA-Z0-9-_]{25,})/);
+        const id = idMatch ? idMatch[1] : urlOrId;
+        if (urlOrId.includes("lh3.googleusercontent.com") || (!urlOrId.includes("drive.google.com") && !urlOrId.includes("google.com/open"))) {
+            return urlOrId;
+        }
+        return `https://lh3.googleusercontent.com/d/${id}`;
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -176,8 +179,8 @@ const getGDriveDirectLink = (urlOrId) => {
         <div className="p-4 md:p-6">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Manajemen Aktivitas</h1>
-                <button 
-                    onClick={() => handleOpenModal()} 
+                <button
+                    onClick={() => handleOpenModal()}
                     className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,6 +200,7 @@ const getGDriveDirectLink = (urlOrId) => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tahun</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                         </tr>
                     </thead>
@@ -208,8 +212,16 @@ const getGDriveDirectLink = (urlOrId) => {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{activity.location}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{activity.year}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {activity.status && (
+                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${activity.status.toLowerCase() === 'selesai' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                            {activity.status}
+                                        </span>
+                                    )}
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right">
                                     <div className="flex justify-end gap-2">
+                                        <Link href={`/activity/${activity.slug}`} className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors text-xs font-bold">Detail</Link>
                                         <button onClick={() => handleOpenModal(activity)} className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 transition-colors text-xs font-bold">Edit</button>
                                         <button onClick={() => handleDelete(activity.id, activity.cover_image)} className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors text-xs font-bold">Hapus</button>
                                     </div>
@@ -262,6 +274,18 @@ const getGDriveDirectLink = (urlOrId) => {
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Tahun</label>
                                     <input type="number" name="year" value={form.year} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Jenis Luaran</label>
+                                    <input type="text" name="jenis_luaran" value={form.jenis_luaran || ""} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="Contoh: Laporan, Jurnal" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                                    <select name="status" value={form.status || ""} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-white py-2 px-3">
+                                        <option value="">Pilih Status</option>
+                                        <option value="Selesai">Selesai</option>
+                                        <option value="Berjalan">Berjalan</option>
+                                    </select>
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700">Deskripsi</label>

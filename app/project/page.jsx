@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import RecentProject from "@/components/RecentProject"
+import DeveloperProjectClient from "@/components/DeveloperProjectClient"
 import PageTracker from "@/components/PageTracker";
 
 
@@ -11,6 +12,7 @@ export default function Project() {
             </Suspense>
 
             <main>
+                <DeveloperProjectClient />
                 <Suspense fallback={<div className="text-center py-10">Memuat proyek...</div>}>
                     <RecentProject />
                 </Suspense>
