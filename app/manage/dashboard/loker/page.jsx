@@ -5,6 +5,31 @@ import { createBrowserClient } from "@supabase/ssr";
 
 const ITEMS_PER_PAGE = 10;
 
+// Helper function to clean gender indicators from job titles
+function cleanJobTitle(title) {
+    if (!title) return "";
+    
+    let clean = title;
+    
+    // Pattern to match gender indicator suffixes like (m/w/d), (f/m/x), (all genders), (gn), (m/f/*)
+    const patterns = [
+        /\s*[\(\[-]\s*(m\/w\/d|f\/m\/d|m\/f\/d|w\/m\/d|m\/f\/x|w\/m\/x|m\/w\/x|f\/m\/x|m\/f\/o|gn|all genders|m\/w\/d\/x|m\/w\/x\/d|all|f\/m\/div)\s*[\)\]-]?/gi,
+        /\s*[\(\[-]\s*[mwdfx](\/[mwdfx]){1,3}\s*[\)\]]/gi, // generic patterns like (m/f), (m/w/d/x)
+        /\s*-\s*all genders\b/gi,
+        /\s*\|\s*all genders\b/gi,
+    ];
+    
+    patterns.forEach(pattern => {
+        clean = clean.replace(pattern, "");
+    });
+    
+    // Clean up trailing dashes, vertical bars, slashes, or whitespace that might be left over
+    clean = clean.replace(/\s*[-|/]\s*$/g, "");
+    clean = clean.trim();
+    
+    return clean;
+}
+
 export default function LokerAdminPage() {
     const supabase = useMemo(() => {
         return createBrowserClient(
@@ -110,9 +135,12 @@ export default function LokerAdminPage() {
 
     const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
+    // Modal state for Detail
+    const [selectedAdminJob, setSelectedAdminJob] = useState(null);
+
     // Modal state for Manual Entry
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [manualForm, setManualForm] = useState({ title: "", company: "", location: "", type: "Full-time", link: "", source: "Manual / Sosial Media" });
+    const [manualForm, setManualForm] = useState({ title: "", company: "", location: "", type: "Full-time", link: "", source: "Manual / Sosial Media", description: "" });
     const [submittingManual, setSubmittingManual] = useState(false);
 
     const handleManualSubmit = async (e) => {
@@ -124,7 +152,7 @@ export default function LokerAdminPage() {
             alert("Gagal menambahkan loker: " + error.message);
         } else {
             setIsModalOpen(false);
-            setManualForm({ title: "", company: "", location: "", type: "Full-time", link: "", source: "Manual / Sosial Media" });
+            setManualForm({ title: "", company: "", location: "", type: "Full-time", link: "", source: "Manual / Sosial Media", description: "" });
             fetchJobs(0);
             setPage(0);
             fetchCount();
@@ -192,7 +220,7 @@ export default function LokerAdminPage() {
                                 ) : jobs.map((job) => (
                                     <tr key={job.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4">
-                                            <div className="text-sm font-bold text-gray-900">{job.title}</div>
+                                            <div className="text-sm font-bold text-gray-900">{cleanJobTitle(job.title)}</div>
                                             <div className="text-xs text-gray-500">{job.company} • {job.location}</div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -201,7 +229,8 @@ export default function LokerAdminPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href={job.link} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-900 mr-4">Lihat</a>
+                                            <button onClick={() => setSelectedAdminJob(job)} className="text-indigo-600 hover:text-indigo-900 mr-4">Detail</button>
+                                            <a href={job.link} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-950 mr-4">Link Asli</a>
                                             <button onClick={() => handleDeleteJob(job.id)} className="text-red-600 hover:text-red-900">Hapus</button>
                                         </td>
                                     </tr>
@@ -304,10 +333,46 @@ export default function LokerAdminPage() {
                                 <input required type="url" value={manualForm.link} onChange={e => setManualForm({...manualForm, link: e.target.value})} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Link post IG / FB / Web Resmi" />
                                 <p className="text-[10px] text-gray-400 mt-1">Pastikan link berbeda dari yang sudah ada.</p>
                             </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Deskripsi Pekerjaan (Opsional)</label>
+                                <textarea value={manualForm.description} onChange={e => setManualForm({...manualForm, description: e.target.value})} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none h-24" placeholder="Kualifikasi, deskripsi pekerjaan, dll..."></textarea>
+                            </div>
                             <button type="submit" disabled={submittingManual} className="w-full bg-blue-600 text-white rounded-lg py-2 text-sm font-bold hover:bg-blue-700 transition-colors disabled:opacity-50">
                                 {submittingManual ? 'Menyimpan...' : 'Simpan Loker'}
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Detail Loker untuk Admin */}
+            {selectedAdminJob && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl p-6 flex flex-col max-h-[85vh]">
+                        <div className="flex justify-between items-start border-b border-gray-100 pb-3 mb-4">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">{cleanJobTitle(selectedAdminJob.title)}</h3>
+                                <p className="text-sm text-gray-500">{selectedAdminJob.company} • {selectedAdminJob.location}</p>
+                            </div>
+                            <button onClick={() => setSelectedAdminJob(null)} className="text-gray-400 hover:text-gray-600 p-1">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                        <div className="overflow-y-auto flex-1 text-sm text-gray-700 leading-relaxed mb-6">
+                            {selectedAdminJob.description ? (
+                                <div dangerouslySetInnerHTML={{ __html: selectedAdminJob.description }} />
+                            ) : (
+                                <p className="text-gray-400 italic">Tidak ada deskripsi detail.</p>
+                            )}
+                        </div>
+                        <div className="flex justify-end gap-3 border-t border-gray-100 pt-3">
+                            <a href={selectedAdminJob.link} target="_blank" rel="noopener noreferrer" className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors">
+                                Kunjungi Link Sumber
+                            </a>
+                            <button onClick={() => setSelectedAdminJob(null)} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors">
+                                Tutup
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

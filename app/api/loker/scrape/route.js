@@ -1,6 +1,62 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+// Helper function to clean and sanitize HTML descriptions before saving to DB
+function cleanHtmlDescription(html) {
+    if (!html) return "";
+    
+    let clean = html;
+    
+    // Remove scripts, styles, iframes, embeds, and object tags completely
+    clean = clean.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "");
+    clean = clean.replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "");
+    clean = clean.replace(/<iframe[^>]*>([\s\S]*?)<\/iframe>/gi, "");
+    clean = clean.replace(/<embed[^>]*>([\s\S]*?)<\/embed>/gi, "");
+    clean = clean.replace(/<object[^>]*>([\s\S]*?)<\/object>/gi, "");
+    
+    // Remove HTML comments
+    clean = clean.replace(/<!--[\s\S]*?-->/g, "");
+    
+    // Remove inline event handlers (e.g. onclick, onload, onerror, etc)
+    clean = clean.replace(/\s+on\w+\s*=\s*(["'])(.*?)\2/gi, "");
+    clean = clean.replace(/\s+on\w+\s*=\s*([^\s>]+)/gi, "");
+    
+    // Remove javascript: links
+    clean = clean.replace(/href\s*=\s*(["'])javascript:(.*?)\3/gi, 'href="#"');
+    
+    // Normalize excessive line breaks/br tags
+    clean = clean.replace(/(<br\s*\/?>\s*){3,}/gi, "<br><br>");
+    
+    // Trim extra spaces and newlines
+    clean = clean.trim();
+    return clean;
+}
+
+// Helper function to clean gender indicators from job titles
+function cleanJobTitle(title) {
+    if (!title) return "";
+    
+    let clean = title;
+    
+    // Pattern to match gender indicator suffixes like (m/w/d), (f/m/x), (all genders), (gn), (m/f/*)
+    const patterns = [
+        /\s*[\(\[-]\s*(m\/w\/d|f\/m\/d|m\/f\/d|w\/m\/d|m\/f\/x|w\/m\/x|m\/w\/x|f\/m\/x|m\/f\/o|gn|all genders|m\/w\/d\/x|m\/w\/x\/d|all|f\/m\/div)\s*[\)\]-]?/gi,
+        /\s*[\(\[-]\s*[mwdfx](\/[mwdfx]){1,3}\s*[\)\]]/gi, // generic patterns like (m/f), (m/w/d/x)
+        /\s*-\s*all genders\b/gi,
+        /\s*\|\s*all genders\b/gi,
+    ];
+    
+    patterns.forEach(pattern => {
+        clean = clean.replace(pattern, "");
+    });
+    
+    // Clean up trailing dashes, vertical bars, slashes, or whitespace that might be left over
+    clean = clean.replace(/\s*[-|/]\s*$/g, "");
+    clean = clean.trim();
+    
+    return clean;
+}
+
 export async function POST(req) {
     try {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -17,12 +73,13 @@ export async function POST(req) {
             if (remotiveRes.ok) {
                 const remotiveData = await remotiveRes.json();
                 const jobs = remotiveData.jobs.map(job => ({
-                    title: job.title,
+                    title: cleanJobTitle(job.title),
                     company: job.company_name,
                     location: job.candidate_required_location || "Remote",
                     type: job.job_type ? job.job_type.replace("_", " ") : "Full-time",
                     link: job.url,
-                    source: "Remotive (Luar Negeri)"
+                    source: "Remotive (Luar Negeri)",
+                    description: cleanHtmlDescription(job.description)
                 }));
                 newJobs = [...newJobs, ...jobs];
             }
@@ -40,12 +97,13 @@ export async function POST(req) {
                     .filter(job => job.title.toLowerCase().match(/developer|engineer|programmer|data|it|software|tech|frontend|backend|fullstack/))
                     .slice(0, 15)
                     .map(job => ({
-                        title: job.title,
+                        title: cleanJobTitle(job.title),
                         company: job.company_name,
                         location: job.location || "Remote",
                         type: "Full-time", // Arbeitnow tidak selalu memiliki tipe terstruktur
                         link: job.url,
-                        source: "Arbeitnow (Global)"
+                        source: "Arbeitnow (Global)",
+                        description: cleanHtmlDescription(job.description)
                     }));
                 newJobs = [...newJobs, ...itJobs];
             }
@@ -63,12 +121,13 @@ export async function POST(req) {
                         .filter(job => job.jobGeo && (job.jobGeo.toLowerCase().includes("apac") || job.jobGeo.toLowerCase().includes("asia") || job.jobGeo.toLowerCase().includes("indonesia") || job.jobGeo.toLowerCase().includes("anywhere")))
                         .slice(0, 10)
                         .map(job => ({
-                            title: job.jobTitle,
+                            title: cleanJobTitle(job.jobTitle),
                             company: job.companyName,
                             location: job.jobGeo || "Remote APAC",
                             type: job.jobType ? job.jobType.join(", ") : "Full-time",
                             link: job.url,
-                            source: "Jobicy (Asia/Global)"
+                            source: "Jobicy (Asia/Global)",
+                            description: cleanHtmlDescription(job.jobDescription || job.description)
                         }));
                     newJobs = [...newJobs, ...apacJobs];
                 }

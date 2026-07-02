@@ -5,6 +5,31 @@ import { createBrowserClient } from "@supabase/ssr";
 
 const ITEMS_PER_PAGE = 9;
 
+// Helper function to clean gender indicators from job titles
+function cleanJobTitle(title) {
+    if (!title) return "";
+    
+    let clean = title;
+    
+    // Pattern to match gender indicator suffixes like (m/w/d), (f/m/x), (all genders), (gn), (m/f/*)
+    const patterns = [
+        /\s*[\(\[-]\s*(m\/w\/d|f\/m\/d|m\/f\/d|w\/m\/d|m\/f\/x|w\/m\/x|m\/w\/x|f\/m\/x|m\/f\/o|gn|all genders|m\/w\/d\/x|m\/w\/x\/d|all|f\/m\/div)\s*[\)\]-]?/gi,
+        /\s*[\(\[-]\s*[mwdfx](\/[mwdfx]){1,3}\s*[\)\]]/gi, // generic patterns like (m/f), (m/w/d/x)
+        /\s*-\s*all genders\b/gi,
+        /\s*\|\s*all genders\b/gi,
+    ];
+    
+    patterns.forEach(pattern => {
+        clean = clean.replace(pattern, "");
+    });
+    
+    // Clean up trailing dashes, vertical bars, slashes, or whitespace that might be left over
+    clean = clean.replace(/\s*[-|/]\s*$/g, "");
+    clean = clean.trim();
+    
+    return clean;
+}
+
 export default function LokerPublicPage() {
     const supabase = useMemo(() => {
         return createBrowserClient(
@@ -231,35 +256,20 @@ export default function LokerPublicPage() {
                                     {job.type || "Full-time"}
                                 </span>
                                 
-                                <h3 className="text-lg font-bold text-slate-800 mb-1 leading-tight">{job.title}</h3>
-                                <p className="text-sm text-slate-600 mb-4">{job.company} • {job.location}</p>
+                                <h3 className="text-lg font-bold text-slate-800 mb-1 leading-tight">{cleanJobTitle(job.title)}</h3>
+                                <p className="text-sm text-slate-600 mb-2">{job.company} • {job.location}</p>
+                                
+                                <div className="text-[11px] text-slate-400 mb-4">
+                                    Sumber: <span className="font-semibold text-indigo-500">{job.source}</span>
+                                </div>
                                 
                                 <div className="mt-auto pt-4 border-t border-slate-50 flex gap-2">
-                                    {user ? (
-                                        <button 
-                                            onClick={() => openApplyModal(job)}
-                                            disabled={!!appliedJobs[job.id]}
-                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${appliedJobs[job.id] ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200'}`}
-                                        >
-                                            {appliedJobs[job.id] ? "Sudah Dilamar" : "Kirim CV / Lamar"}
-                                        </button>
-                                    ) : (
-                                        <button 
-                                            onClick={handleGoogleLogin}
-                                            className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-colors"
-                                        >
-                                            Login untuk Melamar
-                                        </button>
-                                    )}
-                                    <a 
-                                        href={job.link} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold rounded-lg transition-colors flex items-center justify-center"
-                                        title="Buka Tautan Asli"
+                                    <button 
+                                        onClick={() => openApplyModal(job)}
+                                        className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors text-center shadow-md shadow-indigo-100"
                                     >
-                                        &rarr;
-                                    </a>
+                                        Lihat Detail & Lamar
+                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -280,58 +290,113 @@ export default function LokerPublicPage() {
                 )}
             </div>
 
-            {/* Application Modal */}
+            {/* Detail & Application Modal */}
             {showModal && selectedJob && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-                    <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                            <h3 className="text-lg font-bold text-slate-800">Kirim Lamaran</h3>
-                            <button onClick={() => !uploading && setShowModal(false)} className="text-slate-400 hover:text-slate-600">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                        {/* Modal Header */}
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-start bg-slate-50">
+                            <div>
+                                <span className="text-[10px] bg-indigo-50 text-indigo-600 font-bold px-2.5 py-1 rounded-md uppercase tracking-wider mb-2 inline-block">
+                                    {selectedJob.type || "Full-time"}
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800">{cleanJobTitle(selectedJob.title)}</h3>
+                                <p className="text-sm text-slate-600 mt-1">
+                                    <strong>{selectedJob.company}</strong> • {selectedJob.location}
+                                </p>
+                                <p className="text-xs text-slate-400 mt-1">
+                                    Sumber: {selectedJob.source}
+                                </p>
+                            </div>
+                            <button onClick={() => !uploading && setShowModal(false)} className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
-                        <div className="p-6">
-                            <div className="mb-6">
-                                <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Posisi</p>
-                                <p className="text-sm font-semibold text-slate-800">{selectedJob.title} di {selectedJob.company}</p>
-                            </div>
 
+                        {/* Modal Body (Scrollable description) */}
+                        <div className="p-6 overflow-y-auto flex-1">
+                            <h4 className="text-sm font-bold text-slate-700 mb-3">Deskripsi Pekerjaan:</h4>
+                            {selectedJob.description ? (
+                                <div 
+                                    className="text-sm text-slate-700 leading-relaxed space-y-4 pr-2 break-words job-description-html"
+                                    dangerouslySetInnerHTML={{ __html: selectedJob.description }}
+                                />
+                            ) : (
+                                <p className="text-slate-400 italic text-sm">Tidak ada deskripsi detail untuk lowongan ini. Anda dapat melihat informasi lengkap di website sumber.</p>
+                            )}
+                        </div>
+
+                        {/* Modal Footer / Apply Section */}
+                        <div className="p-6 border-t border-slate-100 bg-slate-50">
                             {applyMessage && (
                                 <div className={`p-3 rounded-lg mb-4 text-xs font-semibold ${applyMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
                                     {applyMessage.text}
                                 </div>
                             )}
 
-                            <form onSubmit={handleApply}>
-                                <div className="mb-6">
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Upload CV (PDF)</label>
-                                    <input 
-                                        type="file" 
-                                        accept=".pdf" 
-                                        onChange={(e) => setCvFile(e.target.files[0])}
-                                        required
-                                        className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
-                                    />
-                                    <p className="text-[10px] text-slate-400 mt-2">* Pastikan file berformat .pdf dan ukuran maksimal 2MB.</p>
+                            {appliedJobs[selectedJob.id] ? (
+                                <div className="p-3 bg-green-50 border border-green-200 text-green-700 text-xs font-semibold rounded-xl text-center mb-4">
+                                    Anda telah mengirimkan lamaran untuk lowongan ini. Status: <strong className="uppercase">{appliedJobs[selectedJob.id]}</strong>
                                 </div>
-                                <div className="flex gap-3">
+                            ) : user ? (
+                                <form onSubmit={handleApply} className="mb-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                    <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Kirim Lamaran Langsung</h5>
+                                    <div className="flex flex-col sm:flex-row gap-3 items-end">
+                                        <div className="flex-1 w-full">
+                                            <label className="block text-[10px] font-bold text-slate-500 mb-1">Upload CV (PDF, Maks 2MB)</label>
+                                            <input 
+                                                type="file" 
+                                                accept=".pdf" 
+                                                onChange={(e) => setCvFile(e.target.files[0])}
+                                                required
+                                                className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer border border-slate-100 rounded-lg p-1"
+                                            />
+                                        </div>
+                                        <button 
+                                            type="submit" 
+                                            disabled={!cvFile || uploading}
+                                            className="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50 shadow-md shadow-indigo-100 flex justify-center items-center h-9"
+                                        >
+                                            {uploading ? "Mengirim..." : "Kirim Lamaran"}
+                                        </button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 text-center mb-4">
+                                    <p className="text-xs text-slate-600 mb-3">Silakan login dengan akun Google Anda untuk melamar lowongan ini.</p>
                                     <button 
-                                        type="button" 
-                                        onClick={() => setShowModal(false)}
-                                        disabled={uploading}
-                                        className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
+                                        onClick={handleGoogleLogin} 
+                                        className="mx-auto flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition-all shadow-sm"
                                     >
-                                        Batal
-                                    </button>
-                                    <button 
-                                        type="submit" 
-                                        disabled={!cvFile || uploading}
-                                        className="flex-1 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50 shadow-md shadow-indigo-200 flex justify-center items-center"
-                                    >
-                                        {uploading ? "Mengirim..." : "Kirim Lamaran"}
+                                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
+                                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                                        </svg>
+                                        Login dengan Google
                                     </button>
                                 </div>
-                            </form>
+                            )}
+
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <a 
+                                    href={selectedJob.link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="flex-1 py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors text-center flex items-center justify-center gap-2"
+                                >
+                                    Buka Website Sumber Asli &rarr;
+                                </a>
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowModal(false)}
+                                    disabled={uploading}
+                                    className="py-2.5 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition-colors disabled:opacity-50"
+                                >
+                                    Tutup
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
