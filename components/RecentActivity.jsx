@@ -4,56 +4,34 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { supabase } from "../config/supabaseClient";
 import { CardSkeleton, DashboardSkeleton } from "./Skeleton";
-
-const stripHtml = (html) => {
-    if (!html) return "";
-    const cleanTag = html.replace(/<[^>]*>?/gm, '');
-    const entities = {
-        '&nbsp;': ' ',
-        '&amp;': '&',
-        '&lt;': '<',
-        '&gt;': '>',
-        '&quot;': '"',
-        '&#39;': "'",
-    };
-    return cleanTag.replace(/&[a-z0-9#]+;/gi, (match) => entities[match] || match);
-};
+import { Card, CardImage, CardContent, CardTitle, CardDescription, CardFooter, CardLink } from "./ui/Card";
+import { stripHtml, getGoogleDriveImageUrl } from "../utils/formatters";
 
 const PostCard = ({ title, description, slug, imageUrl, location, year }) => (
-    <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 shadow-sm hover:shadow-xl rounded-2xl overflow-hidden hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
-        <div className="relative h-48 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+    <Card>
+        <CardImage>
             <Image 
                 src={imageUrl} 
                 alt={title} 
                 fill 
                 className="object-cover group-hover:scale-105 transition-transform duration-500" 
             />
-        </div>
-        <div className="p-6 flex flex-col flex-grow">
+        </CardImage>
+        <CardContent>
             <div className="flex justify-between items-center text-xs font-semibold text-slate-400 dark:text-slate-500 mb-3">
                 <span className="truncate pr-2">{location}</span>
                 <span className="flex-shrink-0">{year}</span>
             </div>
-            <h3 className="text-lg font-bold text-slate-850 dark:text-slate-100 mb-2 line-clamp-2 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{title}</h3>
-            <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm mb-6 line-clamp-3 leading-relaxed flex-grow">{stripHtml(description)}</p>
-            <div className="pt-4 border-t border-slate-50 dark:border-slate-800/50 mt-auto">
-                <Link href={`/activity/${slug}`} className="font-bold text-xs text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1.5">
-                    Baca Selengkapnya <span>&rarr;</span>
-                </Link>
-            </div>
-        </div>
-    </div>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{stripHtml(description)}</CardDescription>
+        </CardContent>
+        <CardFooter>
+            <CardLink href={`/activity/${slug}`}>
+                Baca Selengkapnya <span>&rarr;</span>
+            </CardLink>
+        </CardFooter>
+    </Card>
 );
-
-const getGoogleDriveImageUrl = (imageIdentifier) => {
-    if (!imageIdentifier) {
-        return "/placeholder.jpg";
-    }
-    if (imageIdentifier.startsWith('http')) {
-        return imageIdentifier;
-    }
-    return `https://drive.google.com/uc?export=view&id=${imageIdentifier}`;
-};
 
 // SVG Line Chart Component for Location Distribution
 const DistributionLineChart = ({ data }) => {

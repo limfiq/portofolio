@@ -4,24 +4,14 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../config/supabaseClient";
-
-const stripHtml = (html) => {
-    if (!html) return "";
-    const cleanTag = html.replace(/<[^>]*>?/gm, '');
-    const entities = {
-        '&nbsp;': ' ',
-        '&amp;': '&',
-        '&lt;': '<',
-        '&gt;': '>',
-        '&quot;': '"',
-        '&#39;': "'",
-    };
-    return cleanTag.replace(/&[a-z0-9#]+;/gi, (match) => entities[match] || match);
-};
+import { Card, CardImage, CardContent, CardTitle, CardDescription, CardFooter, CardLink } from "./ui/Card";
+import { Button } from "./ui/Button";
+import { Badge } from "./ui/Badge";
+import { stripHtml, getGoogleDriveImageUrl, formatYearRange, truncateText } from "../utils/formatters";
 
 const ProjectCard = ({ title, description, slug, imageUrl, role, fundingSource, yearStart, yearEnd }) => (
-    <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 shadow-sm hover:shadow-xl rounded-2xl overflow-hidden hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
-        <div className="relative w-full h-48 overflow-hidden bg-slate-100 dark:bg-slate-800">
+    <Card>
+        <CardImage className="relative">
             <Image 
                 src={imageUrl} 
                 alt={title} 
@@ -32,79 +22,63 @@ const ProjectCard = ({ title, description, slug, imageUrl, role, fundingSource, 
             {/* Year Badge */}
             {yearStart && (
                 <div className="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-md">
-                    {yearStart === yearEnd ? yearStart : `${yearStart} - ${yearEnd || "Selesai"}`}
+                    {formatYearRange(yearStart, yearEnd)}
                 </div>
             )}
-        </div>
-        <div className="p-6 flex flex-col flex-grow">
+        </CardImage>
+        <CardContent>
             <div className="flex flex-wrap gap-2 mb-3">
                 {role && (
-                    <span className="px-2.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100/50 dark:border-blue-800/40 text-[10px] font-bold rounded-md uppercase tracking-wide">
+                    <Badge variant="default" size="sm">
                         {role}
-                    </span>
+                    </Badge>
                 )}
                 {fundingSource && (
-                    <span className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-bold rounded-md uppercase tracking-wide">
+                    <Badge variant="secondary" size="sm">
                         {fundingSource}
-                    </span>
+                    </Badge>
                 )}
             </div>
-            
-            <h3 className="text-lg font-bold text-slate-850 dark:text-slate-100 mb-2 line-clamp-2 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                {title}
-            </h3>
-            
-            <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm mb-6 flex-grow line-clamp-3 leading-relaxed">
-                {stripHtml(description)}
-            </p>
-            
-            <div className="pt-4 border-t border-slate-50 dark:border-slate-800/50 mt-auto">
-                <Link href={`/project/${slug}`} className="font-bold text-xs text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1.5">
-                    Detail Proyek <span>&rarr;</span>
-                </Link>
-            </div>
-        </div>
-    </div>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{stripHtml(description)}</CardDescription>
+        </CardContent>
+        <CardFooter>
+            <CardLink href={`/project/${slug}`}>
+                Detail Proyek <span>&rarr;</span>
+            </CardLink>
+        </CardFooter>
+    </Card>
 );
 
 const PaginationControls = ({ currentPage, totalPages, onPageChange, loading }) => {
     const hasPrev = currentPage > 1;
     const hasNext = currentPage < totalPages;
-    const btnBase = "px-4 py-2 rounded-lg font-semibold text-xs transition-colors shadow-sm select-none active:scale-95";
-    const btnActive = "bg-blue-600 text-white hover:bg-blue-700";
-    const btnDisabled = "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed";
+
     if (totalPages <= 1) return null;
+
     return (
         <div className="flex justify-center items-center gap-4 mt-12">
-            <button
+            <Button
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={!hasPrev || loading}
-                className={`${btnBase} ${hasPrev && !loading ? btnActive : btnDisabled}`}
+                variant={hasPrev && !loading ? 'primary' : 'outline'}
+                size="md"
             >
                 &laquo; Sebelumnya
-            </button>
+            </Button>
             <span className="text-slate-600 dark:text-slate-350 text-xs font-semibold">
                 Halaman {currentPage} dari {totalPages}
             </span>
-            <button
+            <Button
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={!hasNext || loading}
-                className={`${btnBase} ${hasNext && !loading ? btnActive : btnDisabled}`}
+                variant={hasNext && !loading ? 'primary' : 'outline'}
+                size="md"
             >
                 Selanjutnya &raquo;
-            </button>
+            </Button>
         </div>
     );
-};
-
-const getGoogleDriveImageUrl = (imageIdentifier) => {
-    if (!imageIdentifier) {
-        return "/placeholder.jpg";
-    }
-    if (imageIdentifier.startsWith('http')) {
-        return imageIdentifier;
-    }
-    return `https://drive.google.com/uc?export=view&id=${imageIdentifier}`;
 };
 
 const RecentProject = ({ isHomepage = false }) => {

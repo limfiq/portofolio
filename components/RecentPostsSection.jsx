@@ -4,72 +4,62 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { supabase } from "../config/supabaseClient";
 import { CardSkeleton } from "./Skeleton";
+import { Card, CardImage, CardContent, CardTitle, CardDescription, CardFooter, CardLink } from "./ui/Card";
+import { Button } from "./ui/Button";
+import { stripHtml, getGoogleDriveImageUrl, truncateText } from "../utils/formatters";
 
 const PostCard = ({ title, description, slug, imageUrl }) => (
-    <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 shadow-sm hover:shadow-xl rounded-2xl overflow-hidden hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
-        <div className="relative w-full h-48 bg-slate-100 dark:bg-slate-800">
-             <Image
+    <Card>
+        <CardImage>
+            <Image
                 src={imageUrl}
                 alt={title}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
             />
-        </div>
-        <div className="p-6 flex flex-col flex-grow">
-            <h3 className="text-lg font-bold text-slate-850 dark:text-slate-100 mb-2 line-clamp-2 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                {title}
-            </h3>
-            
-            <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm mb-6 flex-grow line-clamp-3 leading-relaxed">
-                {description}
-            </p>
-            
-            <div className="pt-4 border-t border-slate-50 dark:border-slate-800/50 mt-auto">
-                <Link href={`/blog/${slug}`} className="font-bold text-xs text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1.5">
-                    Baca Selengkapnya <span>&rarr;</span>
-                </Link>
-            </div>
-        </div>
-    </div>
+        </CardImage>
+        <CardContent>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+        </CardContent>
+        <CardFooter>
+            <CardLink href={`/blog/${slug}`}>
+                Baca Selengkapnya <span>&rarr;</span>
+            </CardLink>
+        </CardFooter>
+    </Card>
 );
 
 const PaginationControls = ({ currentPage, totalPages, onPageChange, loading }) => {
     const hasPrev = currentPage > 1;
     const hasNext = currentPage < totalPages;
-    const btnBase = "px-4 py-2 rounded-lg font-semibold text-xs transition-colors shadow-sm select-none active:scale-95";
-    const btnActive = "bg-blue-600 text-white hover:bg-blue-700";
-    const btnDisabled = "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed";
 
     if (totalPages <= 1) return null;
 
     return (
         <div className="flex justify-center items-center gap-4 mt-12">
-            <button
+            <Button
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={!hasPrev || loading}
-                className={`${btnBase} ${hasPrev && !loading ? btnActive : btnDisabled}`}
+                variant={hasPrev && !loading ? 'primary' : 'outline'}
+                size="md"
             >
                 &laquo; Sebelumnya
-            </button>
+            </Button>
             <span className="text-slate-600 dark:text-slate-350 text-xs font-semibold">
                 Halaman {currentPage} dari {totalPages}
             </span>
-            <button
+            <Button
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={!hasNext || loading}
-                className={`${btnBase} ${hasNext && !loading ? btnActive : btnDisabled}`}
+                variant={hasNext && !loading ? 'primary' : 'outline'}
+                size="md"
             >
                 Selanjutnya &raquo;
-            </button>
+            </Button>
         </div>
     );
-};
-
-const getGoogleDriveImageUrl = (imageIdentifier) => {
-    if (!imageIdentifier) return "/banner1.png";
-    if (imageIdentifier.startsWith('http')) return imageIdentifier;
-    return `https://drive.google.com/uc?export=view&id=${imageIdentifier}`;
 };
 
 const RecentPostsSection = ({ isHomepage = false }) => {
@@ -125,23 +115,6 @@ const RecentPostsSection = ({ isHomepage = false }) => {
         }
     };
 
-    const truncateContent = (content, maxLength = 100) => {
-        if (!content) return '';
-        const plainText = content.replace(/<[^>]+>/g, '');
-        const entities = {
-            '&nbsp;': ' ',
-            '&amp;': '&',
-            '&lt;': '<',
-            '&gt;': '>',
-            '&quot;': '"',
-            '&#39;': "'",
-        };
-        const decodedText = plainText.replace(/&[a-z0-9#]+;/gi, (match) => entities[match] || match);
-        
-        if (decodedText.length <= maxLength) return decodedText;
-        return decodedText.substring(0, maxLength) + '...';
-    };
-
     if (loading && blogs.length === 0) return <p className="text-center py-16 text-slate-500">Memuat tulisan...</p>;
     if (error) return <p className="text-center py-16 text-red-500">{error}</p>;
     if (blogs.length === 0) return <p className="text-center py-16 text-slate-500">Belum ada tulisan terbaru.</p>;
@@ -174,7 +147,7 @@ const RecentPostsSection = ({ isHomepage = false }) => {
                             <PostCard
                                 key={blog.id}
                                 title={blog.title}
-                                description={truncateContent(blog.content)}
+                                description={truncateText(stripHtml(blog.content), 100)}
                                 slug={blog.slug}
                                 imageUrl={getGoogleDriveImageUrl(blog.cover_image)}
                             />
@@ -209,7 +182,7 @@ const RecentPostsSection = ({ isHomepage = false }) => {
                         <PostCard
                             key={blog.id}
                             title={blog.title}
-                            description={truncateContent(blog.content)}
+                            description={truncateText(stripHtml(blog.content), 100)}
                             slug={blog.slug}
                             imageUrl={getGoogleDriveImageUrl(blog.cover_image)}
                         />
