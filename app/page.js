@@ -9,7 +9,7 @@ const FeaturedTeachingSection = dynamic(() => import("@/components/FeaturedTeach
 const RecentPostsSection = dynamic(() => import("@/components/RecentPostsSection"));
 const RecentActivity = dynamic(() => import("@/components/RecentActivity"));
 const RecentProject = dynamic(() => import("@/components/RecentProject"));
-const PageTracker = dynamic(() => import("@/components/PageTracker"), { ssr: false });
+import PageTracker from "@/components/PageTracker";
 
 export default function Home() {
     return (
