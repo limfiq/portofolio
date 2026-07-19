@@ -142,6 +142,37 @@ export default function LokerAdminPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [manualForm, setManualForm] = useState({ title: "", company: "", location: "", type: "Full-time", link: "", source: "Manual / Sosial Media", description: "" });
     const [submittingManual, setSubmittingManual] = useState(false);
+    const [fetchingUrl, setFetchingUrl] = useState(false);
+
+    const handleFetchUrlData = async () => {
+        if (!manualForm.link) {
+            alert("Harap masukkan Link Pendaftaran (URL) terlebih dahulu!");
+            return;
+        }
+        setFetchingUrl(true);
+        try {
+            const res = await fetch("/api/loker/scrape-url", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: manualForm.link })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setManualForm(prev => ({
+                    ...prev,
+                    title: data.title || prev.title,
+                    description: data.description || prev.description,
+                    company: data.company || prev.company,
+                    source: data.source !== "Manual / Sosial Media" ? data.source : prev.source
+                }));
+            } else {
+                alert("Gagal mengambil data dari URL: " + (data.error || "Unknown error"));
+            }
+        } catch (err) {
+            alert("Terjadi kesalahan koneksi saat mengambil URL.");
+        }
+        setFetchingUrl(false);
+    };
 
     const handleManualSubmit = async (e) => {
         e.preventDefault();
@@ -330,8 +361,18 @@ export default function LokerAdminPage() {
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 mb-1">Link Pendaftaran (Wajib)</label>
-                                <input required type="url" value={manualForm.link} onChange={e => setManualForm({...manualForm, link: e.target.value})} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Link post IG / FB / Web Resmi" />
-                                <p className="text-[10px] text-gray-400 mt-1">Pastikan link berbeda dari yang sudah ada.</p>
+                                <div className="flex gap-2 items-start">
+                                    <input required type="url" value={manualForm.link} onChange={e => setManualForm({...manualForm, link: e.target.value})} className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://projects.co.id/... atau link valid" />
+                                    <button 
+                                        type="button" 
+                                        onClick={handleFetchUrlData}
+                                        disabled={fetchingUrl || !manualForm.link}
+                                        className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-2 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 border border-indigo-200 whitespace-nowrap"
+                                    >
+                                        {fetchingUrl ? "Mencari..." : "Isi Otomatis ⚡"}
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-gray-400 mt-1">Isi otomatis mendukung projects.co.id, Upwork, Freelancer, Jobstreet, dll.</p>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 mb-1">Deskripsi Pekerjaan (Opsional)</label>
