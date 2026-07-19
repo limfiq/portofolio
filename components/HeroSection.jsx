@@ -81,6 +81,7 @@ const HeroSection = () => {
                                 height={400}
                                 className="w-72 h-72 md:w-96 md:h-96 rounded-[2rem] object-cover border border-slate-100 dark:border-slate-800/50"
                                 priority
+                                fetchPriority="high"
                             />
                         </div>
 
@@ -92,7 +93,7 @@ const HeroSection = () => {
                                 </svg>
                             </div>
                             <div>
-                                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-none">Developer</h4>
+                                <div className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-none">Developer</div>
                                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">IT Practitioner</span>
                             </div>
                         </div>

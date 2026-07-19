@@ -113,7 +113,7 @@ const FeaturedTeachingSection = () => {
                                     <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 group-hover:scale-110 transition-transform">
                                         {getCourseIcon(course.course_name)}
                                     </div>
-                                    <span className="text-[10px] font-extrabold px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-md uppercase tracking-wide">
+                                    <span className="text-[10px] font-extrabold px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-md uppercase tracking-wide">
                                         {course.credits} SKS
                                     </span>
                                 </div>

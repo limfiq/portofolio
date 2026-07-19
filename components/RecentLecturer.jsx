@@ -128,7 +128,7 @@ const RecentLecturer = () => {
                                             <span className="px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 rounded-full text-[10px] font-bold uppercase tracking-wider">
                                                 {course.semester}
                                             </span>
-                                            <span className="text-xs font-bold text-gray-400 dark:text-slate-400 bg-gray-50 dark:bg-slate-800 px-2 py-1 rounded">
+                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
                                                 {course.credits} SKS
                                             </span>
                                         </div>

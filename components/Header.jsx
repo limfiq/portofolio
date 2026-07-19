@@ -183,6 +183,7 @@ const Header = () => {
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className={`focus:outline-none p-2 ${isTextWhite ? "text-white hover:text-white/80" : "text-slate-700 dark:text-slate-300 hover:text-blue-700"
               }`}
+            aria-label="Toggle menu"
           >
             <div className="w-6 h-5 relative flex flex-col justify-between">
               <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${isMenuOpen ? "rotate-45 translate-y-2" : ""}`}></span>

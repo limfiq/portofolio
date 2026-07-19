@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const Footer = () => {
     return (
-        <footer className="bg-slate-900 dark:bg-slate-950 text-slate-350 py-16 border-t border-slate-200/10 dark:border-slate-800/60 mt-20 md:mt-32 w-full select-none">
+        <footer className="bg-slate-900 dark:bg-slate-950 text-slate-400 py-16 border-t border-slate-200/10 dark:border-slate-800/60 mt-20 md:mt-32 w-full select-none">
             <div className="max-w-7xl mx-auto px-6">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8 mb-12">
                     {/* Brand Column */}

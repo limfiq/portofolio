@@ -1,5 +1,6 @@
-title: Portofolio M. Taufiq, M.Kom - Lecturer and Developer
-url: https://limfiq.my.id
-language: en
-description: Portfolio website for M. Taufiq, M.Kom showcasing teaching, research, publications, projects, and academic activities in computer science and innovation.
-keywords: teknologi informasi, pendidikan, penelitian, publikasi, proyek
+# Portofolio M. Taufiq, M.Kom
+
+- **URL**: [https://limfiq.my.id](https://limfiq.my.id)
+- **Description**: Portfolio website for M. Taufiq, M.Kom showcasing teaching, research, publications, projects, and academic activities in computer science and innovation.
+- **Keywords**: teknologi informasi, pendidikan, penelitian, publikasi, proyek
+- **Language**: en
