@@ -1,12 +1,15 @@
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import HeroSection from "@/components/HeroSection";
 import AboutSection from "@/components/AboutSection";
 import TechStackSection from "@/components/TechStackSection";
-import FeaturedTeachingSection from "@/components/FeaturedTeachingSection";
-import RecentPostsSection from "@/components/RecentPostsSection";
-import RecentActivity from "@/components/RecentActivity";
-import RecentProject from "@/components/RecentProject";
-import PageTracker from "@/components/PageTracker";
+
+// Dynamically import client components to reduce initial JS bundle size
+const FeaturedTeachingSection = dynamic(() => import("@/components/FeaturedTeachingSection"));
+const RecentPostsSection = dynamic(() => import("@/components/RecentPostsSection"));
+const RecentActivity = dynamic(() => import("@/components/RecentActivity"));
+const RecentProject = dynamic(() => import("@/components/RecentProject"));
+const PageTracker = dynamic(() => import("@/components/PageTracker"), { ssr: false });
 
 export default function Home() {
     return (

@@ -1,9 +1,11 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import AIChatbot from "@/components/AIChatbot";
+
+const AIChatbot = dynamic(() => import("@/components/AIChatbot"), { ssr: false });
 
 export default function LayoutWrapper({ children }) {
     const pathname = usePathname();

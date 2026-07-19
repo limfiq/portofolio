@@ -16,17 +16,17 @@ const HeroSection = () => {
                         <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse-slow"></span>
                         Academic & Tech Builder
                     </span>
-                    
+
                     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight text-slate-900 dark:text-white">
                         Hello, I'm <br />
                         <span className="bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-600 dark:from-blue-400 dark:via-indigo-300 dark:to-blue-400 bg-clip-text text-transparent">
                             M. Taufiq, M.Kom
                         </span>
                     </h1>
-                    
+
                     <p className="text-lg text-slate-600 dark:text-slate-300 mb-8 leading-relaxed max-w-xl">
-                        Dosen & Peneliti ilmu komputer yang mendedikasikan diri pada inovasi 
-                        <span className="text-blue-700 dark:text-blue-400 font-semibold"> Teknologi Informasi</span>, 
+                        Dosen & Peneliti ilmu komputer yang mendedikasikan diri pada inovasi
+                        <span className="text-blue-700 dark:text-blue-400 font-semibold"> Teknologi Informasi</span>,
                         serta praktisi software development yang membangun sistem digital masa depan.
                     </p>
 
@@ -71,11 +71,11 @@ const HeroSection = () => {
                     <div className="relative">
                         {/* Glowing Background Ring */}
                         <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[2.5rem] rotate-6 opacity-15 blur-xl"></div>
-                        
+
                         {/* Profile Wrapper */}
                         <div className="relative p-2.5 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800/50">
                             <Image
-                                src="/profile.jpg"
+                                src="/profile.webp"
                                 alt="Foto M. Taufiq, M.Kom"
                                 width={400}
                                 height={400}
