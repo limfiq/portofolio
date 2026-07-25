@@ -62,7 +62,7 @@ export async function POST(req) {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         // Gunakan SERVICE_ROLE key jika ada (untuk bypass RLS saat insert), 
         // tapi di project ini kita pakai ANON_KEY + policy insert = true
-        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "dummy-key";
         const supabase = createClient(supabaseUrl, supabaseKey);
 
         let newJobs = [];
