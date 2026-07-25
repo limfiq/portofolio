@@ -49,6 +49,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning={true}>
+      <head>
+        <link rel="preconnect" href="https://acbwbhwwloncxbxgyedm.supabase.co" />
+        <link rel="dns-prefetch" href="https://acbwbhwwloncxbxgyedm.supabase.co" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
         suppressHydrationWarning={true}

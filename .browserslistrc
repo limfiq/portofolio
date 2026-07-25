@@ -1,5 +1,5 @@
-defaults
-not IE 11
-not IE_Mob 11
+chrome >= 90
+firefox >= 88
+safari >= 14
+edge >= 90
 not dead
-last 2 versions

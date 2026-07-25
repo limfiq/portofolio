@@ -79,6 +79,7 @@ const HeroSection = () => {
                                 alt="Foto M. Taufiq, M.Kom"
                                 width={400}
                                 height={400}
+                                sizes="(max-width: 768px) 288px, 384px"
                                 className="w-72 h-72 md:w-96 md:h-96 rounded-[2rem] object-cover border border-slate-100 dark:border-slate-800/50"
                                 priority
                                 fetchPriority="high"
