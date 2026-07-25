@@ -18,7 +18,7 @@ const PostCard = ({ title, description, slug, imageUrl, location, year }) => (
             />
         </CardImage>
         <CardContent>
-            <div className="flex justify-between items-center text-xs font-semibold text-slate-400 dark:text-slate-500 mb-3">
+            <div className="flex justify-between items-center text-xs font-semibold text-slate-600 dark:text-slate-400 mb-3">
                 <span className="truncate pr-2">{location}</span>
                 <span className="flex-shrink-0">{year}</span>
             </div>

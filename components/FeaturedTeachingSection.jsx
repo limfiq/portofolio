@@ -122,7 +122,7 @@ const FeaturedTeachingSection = () => {
                                     {course.course_name}
                                 </h3>
                                 
-                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-4">
+                                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block mb-4">
                                     Semester {course.semester}
                                 </span>
 

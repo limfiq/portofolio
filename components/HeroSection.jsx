@@ -106,8 +106,8 @@ const HeroSection = () => {
                                 </svg>
                             </div>
                             <div>
-                                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-none">Lecturer</h4>
-                                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Computer Science</span>
+                                <div className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-none">Lecturer</div>
+                                <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">Computer Science</span>
                             </div>
                         </div>
                     </div>
