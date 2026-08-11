@@ -57,7 +57,16 @@ function cleanJobTitle(title) {
     return clean;
 }
 
-export async function POST(req) {
+async function runScrape(req) {
+    // Verified CRON_SECRET if set in environment variables
+    const cronSecret = process.env.CRON_SECRET;
+    if (cronSecret) {
+        const authHeader = req.headers.get("authorization");
+        if (authHeader !== `Bearer ${cronSecret}`) {
+            return NextResponse.json({ error: "Unauthorized cron request." }, { status: 401 });
+        }
+    }
+
     try {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         // Gunakan SERVICE_ROLE key jika ada (untuk bypass RLS saat insert), 
@@ -178,3 +187,12 @@ export async function POST(req) {
         return NextResponse.json({ error: "Gagal memproses scraping." }, { status: 500 });
     }
 }
+
+export async function POST(req) {
+    return runScrape(req);
+}
+
+export async function GET(req) {
+    return runScrape(req);
+}
+

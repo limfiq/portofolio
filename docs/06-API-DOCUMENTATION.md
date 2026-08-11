@@ -625,77 +625,52 @@ curl -X POST http://localhost:3000/api/uploads \
 
 ### Scrape Job Listings
 
-**Endpoint:** `POST /api/loker/scrape`
+**Endpoint:** `GET /api/loker/scrape` | `POST /api/loker/scrape`
 
-**Description:** Scrape job vacancies from external sources
+**Description:** Scrape job vacancies from external sources (Remotive, Arbeitnow, Jobicy) and delete listings older than 30 days. Supports automated execution via Vercel Cron (`vercel.json`) set to run daily at 17:00 UTC (00:00 WIB).
 
-**Authentication:** Not required (usually)
-
-**Request:** (may vary based on scraper config)
-```json
-{
-  "source": "job-board-name"
-}
-```
+**Authentication:** Optional Bearer token if `CRON_SECRET` environment variable is configured.
 
 **Response (Success - 200):**
 ```json
 {
-  "jobs": [
-    {
-      "id": 1,
-      "title": "Senior Developer",
-      "location": "Jakarta",
-      "company": "Tech Company",
-      "salary": "Rp 15-20 juta",
-      "description": "Sanitized HTML description",
-      "url": "https://...",
-      "source": "job-source",
-      "posted_date": "2024-07-07T10:00:00Z"
-    }
-  ],
-  "count": 45
+  "message": "Berhasil mengambil 35 loker dari sumber. 5 loker baru ditambahkan. 2 loker kadaluarsa (lebih dari 30 hari) telah dihapus.",
+  "count": 5,
+  "deletedCount": 2
 }
 ```
 
 **Response (Error - 500):**
 ```json
 {
-  "error": "Scraping failed - error message"
+  "error": "Gagal memproses scraping."
 }
 ```
 
 **Features:**
+- Supports HTTP `GET` (for automated Vercel Cron triggers) and `POST` (for manual dashboard triggers)
 - HTML sanitization (removes scripts, styles, dangerous content)
 - Gender indicator removal from job titles
-- Duplicate detection
-- Data validation
+- Duplicate detection & automatic purging of jobs older than 30 days
 
 **Example Usage:**
 ```javascript
-const scrapeJobs = async () => {
-  const response = await fetch('/api/loker/scrape', {
-    method: 'POST'
-  });
-
-  const { jobs, count, error } = await response.json();
-
-  if (error) {
-    console.error('Scraping failed:', error);
-    return;
-  }
-
-  console.log(`Scraped ${count} jobs`);
-  jobs.forEach(job => {
-    console.log(`- ${job.title} at ${job.company}`);
-  });
-};
+// Manual trigger via POST
+const response = await fetch('/api/loker/scrape', {
+  method: 'POST'
+});
+const data = await response.json();
 ```
 
 **Curl Example:**
 ```bash
+# GET (used by Vercel Cron)
+curl http://localhost:3000/api/loker/scrape
+
+# POST (used by Admin Dashboard)
 curl -X POST http://localhost:3000/api/loker/scrape
 ```
+
 
 ---
 

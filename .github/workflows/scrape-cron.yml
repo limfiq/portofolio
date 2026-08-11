@@ -1,0 +1,26 @@
+name: Daily Job Scraping Cron
+
+on:
+  schedule:
+    # Runs every day at 17:00 UTC (00:00 WIB)
+    - cron: '0 17 * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Scraper Endpoint
+        run: |
+          DOMAIN="${{ secrets.APP_DOMAIN }}"
+          CRON_SECRET="${{ secrets.CRON_SECRET }}"
+          if [ -z "$DOMAIN" ]; then
+            echo "APP_DOMAIN secret is not set. Skipping workflow."
+            exit 0
+          fi
+          
+          if [ -n "$CRON_SECRET" ]; then
+            curl -X GET "$DOMAIN/api/loker/scrape" -H "Authorization: Bearer $CRON_SECRET"
+          else
+            curl -X GET "$DOMAIN/api/loker/scrape"
+          fi

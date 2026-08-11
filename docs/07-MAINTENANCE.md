@@ -593,6 +593,7 @@ LIMIT 10;
 - Monitor error logs
 - Check application status
 - Verify backups ran
+- Verify automated job scraping execution (Vercel Cron / GitHub Actions scheduled at 00:00 WIB / 17:00 UTC)
 
 ### Weekly Tasks
 ```bash
