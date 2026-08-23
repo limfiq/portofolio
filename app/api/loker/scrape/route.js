@@ -57,75 +57,106 @@ function cleanJobTitle(title) {
     return clean;
 }
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 async function runScrape(req) {
     // Verified CRON_SECRET if set in environment variables
     const cronSecret = process.env.CRON_SECRET;
     if (cronSecret) {
         const authHeader = req.headers.get("authorization");
-        if (authHeader !== `Bearer ${cronSecret}`) {
+        const isVercelCron = req.headers.get("x-vercel-cron") === "1";
+        
+        // Allow if matching Bearer token OR verified Vercel cron invocation
+        if (authHeader !== `Bearer ${cronSecret}` && !isVercelCron) {
             return NextResponse.json({ error: "Unauthorized cron request." }, { status: 401 });
         }
     }
 
     try {
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        // Gunakan SERVICE_ROLE key jika ada (untuk bypass RLS saat insert), 
-        // tapi di project ini kita pakai ANON_KEY + policy insert = true
-        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "dummy-key";
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        
+        if (!supabaseUrl || !supabaseKey) {
+            console.error("Missing Supabase credentials in server environment");
+            return NextResponse.json({ 
+                error: "Konfigurasi database server belum lengkap (NEXT_PUBLIC_SUPABASE_URL atau NEXT_PUBLIC_SUPABASE_ANON_KEY tidak ditemukan)." 
+            }, { status: 500 });
+        }
 
+        const supabase = createClient(supabaseUrl, supabaseKey);
         let newJobs = [];
+        const sourceErrors = [];
 
         // 1. Fetch dari Remotive (Fokus ke IT / Software Dev Luar Negeri & Remote)
         try {
-            const remotiveRes = await fetch("https://remotive.com/api/remote-jobs?category=software-dev&limit=15");
+            const remotiveRes = await fetch("https://remotive.com/api/remote-jobs?category=software-dev&limit=15", {
+                signal: AbortSignal.timeout(10000),
+                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }
+            });
             if (remotiveRes.ok) {
                 const remotiveData = await remotiveRes.json();
-                const jobs = remotiveData.jobs.map(job => ({
-                    title: cleanJobTitle(job.title),
-                    company: job.company_name,
-                    location: job.candidate_required_location || "Remote",
-                    type: job.job_type ? job.job_type.replace("_", " ") : "Full-time",
-                    link: job.url,
-                    source: "Remotive (Luar Negeri)",
-                    description: cleanHtmlDescription(job.description)
-                }));
-                newJobs = [...newJobs, ...jobs];
+                if (remotiveData.jobs && Array.isArray(remotiveData.jobs)) {
+                    const jobs = remotiveData.jobs.map(job => ({
+                        title: cleanJobTitle(job.title),
+                        company: job.company_name,
+                        location: job.candidate_required_location || "Remote",
+                        type: job.job_type ? job.job_type.replace("_", " ") : "Full-time",
+                        link: job.url,
+                        source: "Remotive (Luar Negeri)",
+                        description: cleanHtmlDescription(job.description)
+                    }));
+                    newJobs = [...newJobs, ...jobs];
+                }
+            } else {
+                sourceErrors.push(`Remotive status: ${remotiveRes.status}`);
             }
         } catch (e) {
-            console.error("Error fetching Remotive:", e);
+            console.error("Error fetching Remotive:", e.message);
+            sourceErrors.push(`Remotive: ${e.message}`);
         }
 
         // 2. Fetch dari Arbeitnow (Global / Umum)
         try {
-            const arbeitnowRes = await fetch("https://www.arbeitnow.com/api/job-board-api");
+            const arbeitnowRes = await fetch("https://www.arbeitnow.com/api/job-board-api", {
+                signal: AbortSignal.timeout(10000),
+                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }
+            });
             if (arbeitnowRes.ok) {
                 const arbeitnowData = await arbeitnowRes.json();
-                // Filter top 15 IT-related jobs
-                const itJobs = arbeitnowData.data
-                    .filter(job => job.title.toLowerCase().match(/developer|engineer|programmer|data|it|software|tech|frontend|backend|fullstack/))
-                    .slice(0, 15)
-                    .map(job => ({
-                        title: cleanJobTitle(job.title),
-                        company: job.company_name,
-                        location: job.location || "Remote",
-                        type: "Full-time", // Arbeitnow tidak selalu memiliki tipe terstruktur
-                        link: job.url,
-                        source: "Arbeitnow (Global)",
-                        description: cleanHtmlDescription(job.description)
-                    }));
-                newJobs = [...newJobs, ...itJobs];
+                if (arbeitnowData.data && Array.isArray(arbeitnowData.data)) {
+                    // Filter top 15 IT-related jobs
+                    const itJobs = arbeitnowData.data
+                        .filter(job => job.title && job.title.toLowerCase().match(/developer|engineer|programmer|data|it|software|tech|frontend|backend|fullstack/))
+                        .slice(0, 15)
+                        .map(job => ({
+                            title: cleanJobTitle(job.title),
+                            company: job.company_name,
+                            location: job.location || "Remote",
+                            type: "Full-time",
+                            link: job.url,
+                            source: "Arbeitnow (Global)",
+                            description: cleanHtmlDescription(job.description)
+                        }));
+                    newJobs = [...newJobs, ...itJobs];
+                }
+            } else {
+                sourceErrors.push(`Arbeitnow status: ${arbeitnowRes.status}`);
             }
         } catch (e) {
-            console.error("Error fetching Arbeitnow:", e);
+            console.error("Error fetching Arbeitnow:", e.message);
+            sourceErrors.push(`Arbeitnow: ${e.message}`);
         }
 
         // 3. Fetch dari Jobicy (Fokus ke APAC / Asia)
         try {
-            const jobicyRes = await fetch("https://jobicy.com/api/v2/remote-jobs?industry=engineering");
+            const jobicyRes = await fetch("https://jobicy.com/api/v2/remote-jobs?industry=engineering", {
+                signal: AbortSignal.timeout(10000),
+                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }
+            });
             if (jobicyRes.ok) {
                 const jobicyData = await jobicyRes.json();
-                if (jobicyData.jobs) {
+                if (jobicyData.jobs && Array.isArray(jobicyData.jobs)) {
                     const apacJobs = jobicyData.jobs
                         .filter(job => job.jobGeo && (job.jobGeo.toLowerCase().includes("apac") || job.jobGeo.toLowerCase().includes("asia") || job.jobGeo.toLowerCase().includes("indonesia") || job.jobGeo.toLowerCase().includes("anywhere")))
                         .slice(0, 10)
@@ -133,20 +164,26 @@ async function runScrape(req) {
                             title: cleanJobTitle(job.jobTitle),
                             company: job.companyName,
                             location: job.jobGeo || "Remote APAC",
-                            type: job.jobType ? job.jobType.join(", ") : "Full-time",
+                            type: job.jobType ? (Array.isArray(job.jobType) ? job.jobType.join(", ") : job.jobType) : "Full-time",
                             link: job.url,
                             source: "Jobicy (Asia/Global)",
                             description: cleanHtmlDescription(job.jobDescription || job.description)
                         }));
                     newJobs = [...newJobs, ...apacJobs];
                 }
+            } else {
+                sourceErrors.push(`Jobicy status: ${jobicyRes.status}`);
             }
         } catch (e) {
-            console.error("Error fetching Jobicy:", e);
+            console.error("Error fetching Jobicy:", e.message);
+            sourceErrors.push(`Jobicy: ${e.message}`);
         }
 
         if (newJobs.length === 0) {
-            return NextResponse.json({ message: "Tidak ada data loker baru yang didapatkan dari sumber." }, { status: 200 });
+            return NextResponse.json({ 
+                message: "Tidak ada data loker baru yang didapatkan dari sumber.",
+                sourceErrors: sourceErrors.length > 0 ? sourceErrors : undefined
+            }, { status: 200 });
         }
 
         // Insert ke Supabase
@@ -156,7 +193,7 @@ async function runScrape(req) {
                 .from("job_vacancies")
                 .insert([job]);
             
-            // Jika error code BUKAN 23505 (unique violation/duplikat link), dan BUKAN error RLS
+            // Jika tidak error (duplikat link atau insert berhasil)
             if (!error) {
                 insertedCount++;
             }
@@ -179,12 +216,13 @@ async function runScrape(req) {
         return NextResponse.json({ 
             message: `Berhasil mengambil ${newJobs.length} loker dari sumber. ${insertedCount} loker baru ditambahkan. ${deletedCount || 0} loker kadaluarsa (lebih dari 30 hari) telah dihapus.`,
             count: insertedCount,
-            deletedCount: deletedCount || 0
+            deletedCount: deletedCount || 0,
+            sourceErrors: sourceErrors.length > 0 ? sourceErrors : undefined
         }, { status: 200 });
 
     } catch (error) {
         console.error("Scraping error:", error);
-        return NextResponse.json({ error: "Gagal memproses scraping." }, { status: 500 });
+        return NextResponse.json({ error: "Gagal memproses scraping: " + (error.message || "Unknown error") }, { status: 500 });
     }
 }
 
