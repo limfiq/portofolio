@@ -1,57 +1,118 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import * as cheerio from "cheerio";
 
 // Helper function to clean and sanitize HTML descriptions before saving to DB
-function cleanHtmlDescription(html) {
-    if (!html) return "";
+function cleanHtmlDescription(rawHtml) {
+    if (!rawHtml) return "";
     
-    let clean = html;
-    
-    // Remove scripts, styles, iframes, embeds, and object tags completely
-    clean = clean.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "");
-    clean = clean.replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "");
-    clean = clean.replace(/<iframe[^>]*>([\s\S]*?)<\/iframe>/gi, "");
-    clean = clean.replace(/<embed[^>]*>([\s\S]*?)<\/embed>/gi, "");
-    clean = clean.replace(/<object[^>]*>([\s\S]*?)<\/object>/gi, "");
-    
-    // Remove HTML comments
-    clean = clean.replace(/<!--[\s\S]*?-->/g, "");
-    
-    // Remove inline event handlers (e.g. onclick, onload, onerror, etc)
-    clean = clean.replace(/\s+on\w+\s*=\s*(["'])(.*?)\2/gi, "");
-    clean = clean.replace(/\s+on\w+\s*=\s*([^\s>]+)/gi, "");
-    
-    // Remove javascript: links
-    clean = clean.replace(/href\s*=\s*(["'])javascript:(.*?)\3/gi, 'href="#"');
-    
-    // Normalize excessive line breaks/br tags
-    clean = clean.replace(/(<br\s*\/?>\s*){3,}/gi, "<br><br>");
-    
-    // Trim extra spaces and newlines
-    clean = clean.trim();
-    return clean;
+    try {
+        const $ = cheerio.load(rawHtml, null, false); // fragments mode
+        
+        // 1. Remove dangerous and unnecessary tags completely
+        $('script, style, iframe, embed, object, meta, link, noscript, svg, form, input, button').remove();
+        
+        // 2. Remove footer promotional links/ads (e.g. Arbeitnow, Jobicy promo text)
+        $('a[href*="arbeitnow.com"]').each((_, el) => {
+            const p = $(el).closest('p');
+            if (p.length && /find more|english speaking jobs|arbeitnow/i.test(p.text())) {
+                p.remove();
+            } else {
+                $(el).remove();
+            }
+        });
+        
+        // Remove promotional text matching Arbeitnow / Jobicy patterns
+        $('p, div, span').each((_, el) => {
+            const text = $(el).text().trim();
+            if (/^find more .* on arbeitnow$/i.test(text) || /^apply on .*$/i.test(text)) {
+                $(el).remove();
+            }
+        });
+        
+        // 3. Strip all style, class, id, and data-* attributes (like data-contrast, data-ccp-props)
+        $('*').each((_, el) => {
+            const attribs = el.attribs || {};
+            for (const attr of Object.keys(attribs)) {
+                if (attr === 'href') {
+                    // Sanitize href
+                    const val = attribs[attr];
+                    if (val && val.toLowerCase().startsWith('javascript:')) {
+                        $(el).attr('href', '#');
+                    }
+                } else if (attr === 'target') {
+                    $(el).attr('target', '_blank').attr('rel', 'noopener noreferrer');
+                } else {
+                    // Remove all other attributes (data-*, style, class, id, on*, etc.)
+                    $(el).removeAttr(attr);
+                }
+            }
+        });
+        
+        // 4. Unwrap useless wrapper tags (span, font)
+        $('span, font').each((_, el) => {
+            $(el).replaceWith($(el).contents());
+        });
+        
+        // 5. Remove empty elements (paragraphs, list items, headers with only whitespace or &nbsp;)
+        let removedEmpty = true;
+        while (removedEmpty) {
+            removedEmpty = false;
+            $('p, li, h1, h2, h3, h4, h5, h6, div, b, strong, i, em').each((_, el) => {
+                const text = $(el).text().replace(/\u00a0/g, ' ').trim();
+                const children = $(el).children();
+                if (!text && children.length === 0) {
+                    $(el).remove();
+                    removedEmpty = true;
+                }
+            });
+        }
+        
+        let cleanedHtml = $.html().trim();
+        
+        // Normalize redundant line breaks
+        cleanedHtml = cleanedHtml.replace(/(<br\s*\/?>\s*){3,}/gi, "<br><br>");
+        // Remove trailing or leading break tags
+        cleanedHtml = cleanedHtml.replace(/^(<br\s*\/?>)+|(<br\s*\/?>)+$/gi, "").trim();
+        
+        return cleanedHtml;
+    } catch (err) {
+        console.error("Error sanitizing HTML with cheerio:", err);
+        // Fallback basic regex cleaning
+        return rawHtml
+            .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, "")
+            .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, "")
+            .replace(/<span[^>]*>/gi, "")
+            .replace(/<\/span>/gi, "")
+            .trim();
+    }
 }
 
-// Helper function to clean gender indicators from job titles
+// Helper function to clean gender indicators and formatting from job titles
 function cleanJobTitle(title) {
     if (!title) return "";
     
     let clean = title;
     
+    // Normalize parenthesized levels: "(Senior)" -> "Senior", "(Junior)" -> "Junior", "(Lead)" -> "Lead"
+    clean = clean.replace(/\((Senior|Junior|Lead|Mid|Entry|Principal|Intern|Staff)\)/gi, "$1");
+    
     // Pattern to match gender indicator suffixes like (m/w/d), (f/m/x), (all genders), (gn), (m/f/*)
     const patterns = [
         /\s*[\(\[-]\s*(m\/w\/d|f\/m\/d|m\/f\/d|w\/m\/d|m\/f\/x|w\/m\/x|m\/w\/x|f\/m\/x|m\/f\/o|gn|all genders|m\/w\/d\/x|m\/w\/x\/d|all|f\/m\/div)\s*[\)\]-]?/gi,
-        /\s*[\(\[-]\s*[mwdfx](\/[mwdfx]){1,3}\s*[\)\]]/gi, // generic patterns like (m/f), (m/w/d/x)
+        /\s*[\(\[-]\s*[mwdfx](\/[mwdfx]){1,3}\s*[\)\]]/gi,
         /\s*-\s*all genders\b/gi,
         /\s*\|\s*all genders\b/gi,
+        /\s*-\s*Remote\b/gi,
     ];
     
     patterns.forEach(pattern => {
         clean = clean.replace(pattern, "");
     });
     
-    // Clean up trailing dashes, vertical bars, slashes, or whitespace that might be left over
+    // Clean up trailing dashes, vertical bars, slashes, or whitespace
     clean = clean.replace(/\s*[-|/]\s*$/g, "");
+    clean = clean.replace(/\s{2,}/g, " ");
     clean = clean.trim();
     
     return clean;

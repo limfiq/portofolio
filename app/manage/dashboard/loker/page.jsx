@@ -2,8 +2,28 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { createBrowserClient } from "@supabase/ssr";
+import { getLocationScope, getJobCategory } from "@/app/loker/page";
 
 const ITEMS_PER_PAGE = 10;
+
+// Helper function to clean HTML descriptions for frontend display
+function cleanHtmlClient(rawHtml) {
+    if (!rawHtml) return "";
+    let clean = rawHtml;
+    // Strip style, class, id, and data-* attributes
+    clean = clean.replace(/\s+data-[a-zA-Z0-9\-]+=(["']).*?\1/gi, "");
+    clean = clean.replace(/\s+data-[a-zA-Z0-9\-]+=[^\s>]+/gi, "");
+    clean = clean.replace(/\s+(style|class|id)=(["']).*?\2/gi, "");
+    // Unwrap span and font tags
+    clean = clean.replace(/<\/?(span|font)[^>]*>/gi, "");
+    // Remove Arbeitnow promo footers
+    clean = clean.replace(/<p[^>]*>.*?Find more.*?on Arbeitnow.*?<\/p>/gi, "");
+    clean = clean.replace(/Find more.*?on Arbeitnow/gi, "");
+    // Remove empty paragraphs / non-breaking space lines
+    clean = clean.replace(/<p[^>]*>(\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, "");
+    clean = clean.replace(/(<br\s*\/?>\s*){3,}/gi, "<br><br>");
+    return clean.trim();
+}
 
 // Helper function to clean gender indicators from job titles
 function cleanJobTitle(title) {
@@ -11,20 +31,25 @@ function cleanJobTitle(title) {
     
     let clean = title;
     
+    // Normalize parenthesized levels: "(Senior)" -> "Senior", "(Junior)" -> "Junior", "(Lead)" -> "Lead"
+    clean = clean.replace(/\((Senior|Junior|Lead|Mid|Entry|Principal|Intern|Staff)\)/gi, "$1");
+    
     // Pattern to match gender indicator suffixes like (m/w/d), (f/m/x), (all genders), (gn), (m/f/*)
     const patterns = [
         /\s*[\(\[-]\s*(m\/w\/d|f\/m\/d|m\/f\/d|w\/m\/d|m\/f\/x|w\/m\/x|m\/w\/x|f\/m\/x|m\/f\/o|gn|all genders|m\/w\/d\/x|m\/w\/x\/d|all|f\/m\/div)\s*[\)\]-]?/gi,
-        /\s*[\(\[-]\s*[mwdfx](\/[mwdfx]){1,3}\s*[\)\]]/gi, // generic patterns like (m/f), (m/w/d/x)
+        /\s*[\(\[-]\s*[mwdfx](\/[mwdfx]){1,3}\s*[\)\]]/gi,
         /\s*-\s*all genders\b/gi,
         /\s*\|\s*all genders\b/gi,
+        /\s*-\s*Remote\b/gi,
     ];
     
     patterns.forEach(pattern => {
         clean = clean.replace(pattern, "");
     });
     
-    // Clean up trailing dashes, vertical bars, slashes, or whitespace that might be left over
+    // Clean up trailing dashes, vertical bars, slashes, or whitespace
     clean = clean.replace(/\s*[-|/]\s*$/g, "");
+    clean = clean.replace(/\s{2,}/g, " ");
     clean = clean.trim();
     
     return clean;
@@ -248,24 +273,43 @@ export default function LokerAdminPage() {
                                     <tr><td colSpan="3" className="text-center py-8 text-gray-500">Memuat data...</td></tr>
                                 ) : jobs.length === 0 ? (
                                     <tr><td colSpan="3" className="text-center py-8 text-gray-500">Belum ada data loker. Silakan klik tombol Scrape atau Tambah Manual.</td></tr>
-                                ) : jobs.map((job) => (
-                                    <tr key={job.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm font-bold text-gray-900">{cleanJobTitle(job.title)}</div>
-                                            <div className="text-xs text-gray-500">{job.company} • {job.location}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2.5 py-1 text-[10px] font-bold rounded-md uppercase tracking-wider ${job.source.includes('Manual') ? 'bg-orange-50 text-orange-700' : 'bg-blue-50 text-blue-700'}`}>
-                                                {job.source}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button onClick={() => setSelectedAdminJob(job)} className="text-indigo-600 hover:text-indigo-900 mr-4">Detail</button>
-                                            <a href={job.link} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-950 mr-4">Link Asli</a>
-                                            <button onClick={() => handleDeleteJob(job.id)} className="text-red-600 hover:text-red-900">Hapus</button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                ) : (
+                                    jobs.map((job) => {
+                                        const scopeInfo = getLocationScope(job);
+                                        const catInfo = getJobCategory(job);
+                                        return (
+                                            <tr key={job.id} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-1.5 mb-1">
+                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${scopeInfo.color}`}>
+                                                            {scopeInfo.badge}
+                                                        </span>
+                                                        {scopeInfo.isRemote && (
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                                                                🏠 Remote
+                                                            </span>
+                                                        )}
+                                                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${catInfo.color}`}>
+                                                            {catInfo.icon} {catInfo.name}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-sm font-bold text-gray-900">{cleanJobTitle(job.title)}</div>
+                                                    <div className="text-xs text-gray-500">{job.company} • {job.location}</div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-2.5 py-1 text-[10px] font-bold rounded-md uppercase tracking-wider ${job.source.includes('Manual') ? 'bg-orange-50 text-orange-700' : 'bg-blue-50 text-blue-700'}`}>
+                                                        {job.source}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <button onClick={() => setSelectedAdminJob(job)} className="text-indigo-600 hover:text-indigo-900 mr-4 font-semibold">Detail</button>
+                                                    <a href={job.link} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-950 mr-4">Link Asli</a>
+                                                    <button onClick={() => handleDeleteJob(job.id)} className="text-red-600 hover:text-red-900">Hapus</button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -387,21 +431,41 @@ export default function LokerAdminPage() {
             )}
 
             {/* Modal Detail Loker untuk Admin */}
-            {selectedAdminJob && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl p-6 flex flex-col max-h-[85vh]">
-                        <div className="flex justify-between items-start border-b border-gray-100 pb-3 mb-4">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900">{cleanJobTitle(selectedAdminJob.title)}</h3>
-                                <p className="text-sm text-gray-500">{selectedAdminJob.company} • {selectedAdminJob.location}</p>
+            {selectedAdminJob && (() => {
+                const adminScope = getLocationScope(selectedAdminJob);
+                const adminCat = getJobCategory(selectedAdminJob);
+
+                return (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-2xl p-6 flex flex-col max-h-[85vh]">
+                            <div className="flex justify-between items-start border-b border-gray-100 pb-3 mb-4">
+                                <div>
+                                    <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${adminScope.color}`}>
+                                            {adminScope.badge}
+                                        </span>
+                                        {adminScope.isRemote && (
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                                                🏠 Remote
+                                            </span>
+                                        )}
+                                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${adminCat.color}`}>
+                                            {adminCat.icon} {adminCat.name}
+                                        </span>
+                                        <span className="text-[10px] bg-slate-100 text-slate-600 font-medium px-2 py-0.5 rounded">
+                                            {selectedAdminJob.type || "Full-time"}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-lg font-bold text-gray-900">{cleanJobTitle(selectedAdminJob.title)}</h3>
+                                    <p className="text-sm text-gray-500">{selectedAdminJob.company} • {selectedAdminJob.location}</p>
+                                </div>
+                                <button onClick={() => setSelectedAdminJob(null)} className="text-gray-400 hover:text-gray-600 p-1">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
                             </div>
-                            <button onClick={() => setSelectedAdminJob(null)} className="text-gray-400 hover:text-gray-600 p-1">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                        </div>
-                        <div className="overflow-y-auto flex-1 text-sm text-gray-700 leading-relaxed mb-6">
+                        <div className="overflow-y-auto flex-1 text-sm text-gray-700 leading-relaxed mb-6 job-description-html pr-2">
                             {selectedAdminJob.description ? (
-                                <div dangerouslySetInnerHTML={{ __html: selectedAdminJob.description }} />
+                                <div dangerouslySetInnerHTML={{ __html: cleanHtmlClient(selectedAdminJob.description) }} />
                             ) : (
                                 <p className="text-gray-400 italic">Tidak ada deskripsi detail.</p>
                             )}
@@ -416,7 +480,8 @@ export default function LokerAdminPage() {
                         </div>
                     </div>
                 </div>
-            )}
-        </div>
-    );
+            );
+        })()}
+    </div>
+);
 }
