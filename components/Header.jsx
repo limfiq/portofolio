@@ -55,26 +55,26 @@ const Header = () => {
     {
       label: "Aplikasi",
       submenu: [
-        { 
-          href: "https://pos.limfiq.my.id", 
-          label: "Aplikasi POS", 
-          desc: "Point of Sale & Kasir", 
-          icon: "🛒", 
-          external: true 
+        {
+          href: "https://pos.limfiq.my.id",
+          label: "Aplikasi POS",
+          desc: "Point of Sale & Kasir",
+          icon: "🛒",
+          external: true
         },
-        { 
-          href: "https://posyandu.limfiq.my.id", 
-          label: "Aplikasi Posyandu", 
-          desc: "Layanan Kesehatan Balita", 
-          icon: "👶", 
-          external: true 
+        {
+          href: "https://posyandu.limfiq.my.id",
+          label: "Aplikasi Posyandu",
+          desc: "Layanan Kesehatan Balita",
+          icon: "👶",
+          external: true
         },
-        { 
-          href: "https://yayasan.limfiq.my.id", 
-          label: "Aplikasi Yayasan", 
-          desc: "Sistem Manajemen Yayasan", 
-          icon: "🏛️", 
-          external: true 
+        {
+          href: "https://sdidarulfaizin.my.id",
+          label: "SDIT Darul Faizin",
+          desc: "Sistem Informasi Sekolah",
+          icon: "🏛️",
+          external: true
         },
       ]
     },
