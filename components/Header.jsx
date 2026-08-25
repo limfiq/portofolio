@@ -52,6 +52,32 @@ const Header = () => {
     { href: "/lecturer", label: "Pengajaran" },
     { href: "/blog", label: "Tulisan" },
     { href: "/loker", label: "Loker IT" },
+    {
+      label: "Aplikasi",
+      submenu: [
+        { 
+          href: "https://pos.limfiq.my.id", 
+          label: "Aplikasi POS", 
+          desc: "Point of Sale & Kasir", 
+          icon: "🛒", 
+          external: true 
+        },
+        { 
+          href: "https://posyandu.limfiq.my.id", 
+          label: "Aplikasi Posyandu", 
+          desc: "Layanan Kesehatan Balita", 
+          icon: "👶", 
+          external: true 
+        },
+        { 
+          href: "https://yayasan.limfiq.my.id", 
+          label: "Aplikasi Yayasan", 
+          desc: "Sistem Manajemen Yayasan", 
+          icon: "🏛️", 
+          external: true 
+        },
+      ]
+    },
   ];
 
   const darkPages = [
@@ -85,10 +111,11 @@ const Header = () => {
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex gap-8 items-center">
+        <div className="hidden md:flex gap-7 items-center">
           {navLinks.map((link) => {
             if (link.submenu) {
               const isSubActive = link.submenu.some(sub => pathname === sub.href);
+              const hasExternal = link.submenu.some(sub => sub.external);
               return (
                 <div key={link.label} className="relative group">
                   <button className={`flex items-center gap-1 text-sm font-medium transition-colors py-2 ${isTextWhite
@@ -100,12 +127,42 @@ const Header = () => {
                     <span className={`absolute bottom-0 left-0 w-0 h-0.5 transition-all duration-300 group-hover:w-full ${isTextWhite ? "bg-white" : "bg-blue-700 dark:bg-blue-400"
                       } ${isSubActive ? "w-full" : ""}`}></span>
                   </button>
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 overflow-hidden transform origin-top-left scale-95 group-hover:scale-100 flex flex-col z-50">
-                    {link.submenu.map(sub => (
-                      <Link key={sub.href} href={sub.href} className={`px-4 py-3 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 ${pathname === sub.href ? 'text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20' : 'text-slate-700 dark:text-slate-300'}`}>
-                        {sub.label}
-                      </Link>
-                    ))}
+                  <div className={`absolute top-full left-0 mt-2 ${hasExternal ? 'w-60 p-1.5' : 'w-48'} bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 overflow-hidden transform origin-top-left scale-95 group-hover:scale-100 flex flex-col z-50`}>
+                    {link.submenu.map(sub => {
+                      if (sub.external) {
+                        return (
+                          <a
+                            key={sub.href}
+                            href={sub.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3.5 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-300 flex items-center justify-between group/item transition-colors"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              {sub.icon && <span className="text-base">{sub.icon}</span>}
+                              <div className="text-left">
+                                <div className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors">
+                                  {sub.label}
+                                </div>
+                                {sub.desc && (
+                                  <div className="text-[10px] text-slate-400 dark:text-slate-400 font-normal">
+                                    {sub.desc}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <svg className="w-3.5 h-3.5 text-slate-400 group-hover/item:text-blue-500 group-hover/item:translate-x-0.5 group-hover/item:-translate-y-0.5 transition-all flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        );
+                      }
+                      return (
+                        <Link key={sub.href} href={sub.href} className={`px-4 py-3 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 ${pathname === sub.href ? 'text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20' : 'text-slate-700 dark:text-slate-300'}`}>
+                          {sub.label}
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -206,16 +263,36 @@ const Header = () => {
               return (
                 <div key={link.label} className="flex flex-col items-center gap-4">
                   <span className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{link.label}</span>
-                  {link.submenu.map(sub => (
-                    <Link
-                      key={sub.href}
-                      href={sub.href}
-                      className="text-lg font-medium text-slate-700 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {sub.label}
-                    </Link>
-                  ))}
+                  {link.submenu.map(sub => {
+                    if (sub.external) {
+                      return (
+                        <a
+                          key={sub.href}
+                          href={sub.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-base font-medium text-slate-700 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400 flex items-center justify-center gap-2"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          {sub.icon && <span>{sub.icon}</span>}
+                          <span>{sub.label}</span>
+                          <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      );
+                    }
+                    return (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        className="text-lg font-medium text-slate-700 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {sub.label}
+                      </Link>
+                    );
+                  })}
                   <div className="w-12 h-px bg-slate-200 dark:bg-slate-700 mt-2"></div>
                 </div>
               );

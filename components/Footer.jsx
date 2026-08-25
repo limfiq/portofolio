@@ -55,14 +55,55 @@ const Footer = () => {
                     </div>
 
                     {/* Quick Links Column */}
-                    <div className="md:col-span-3">
+                    <div className="md:col-span-2">
                         <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Navigasi</h3>
                         <ul className="space-y-3 text-sm">
                             <li><Link href="/about" className="text-slate-300 hover:text-blue-400 hover:underline transition-colors">Tentang Saya</Link></li>
                             <li><Link href="/publications" className="text-slate-300 hover:text-blue-400 hover:underline transition-colors">Publikasi Ilmiah</Link></li>
                             <li><Link href="/penelitian-pengabdian" className="text-slate-300 hover:text-blue-400 hover:underline transition-colors">Penelitian & Pengabdian</Link></li>
                             <li><Link href="/lecturer" className="text-slate-300 hover:text-blue-400 hover:underline transition-colors">Aktivitas Mengajar</Link></li>
+                            <li><Link href="/loker" className="text-slate-300 hover:text-blue-400 hover:underline transition-colors">Loker IT</Link></li>
                             <li><Link href="/contact" className="text-slate-300 hover:text-blue-400 hover:underline transition-colors">Kontak</Link></li>
+                        </ul>
+                    </div>
+
+                    {/* Web Apps Column */}
+                    <div className="md:col-span-2">
+                        <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Aplikasi Web</h3>
+                        <ul className="space-y-3 text-sm">
+                            <li>
+                                <a 
+                                    href="https://pos.limfiq.my.id" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-slate-300 hover:text-blue-400 transition-colors inline-flex items-center gap-1 group"
+                                >
+                                    <span>🛒 POS Kasir</span>
+                                    <span className="text-[10px] opacity-60 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a 
+                                    href="https://posyandu.limfiq.my.id" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-slate-300 hover:text-blue-400 transition-colors inline-flex items-center gap-1 group"
+                                >
+                                    <span>👶 Posyandu</span>
+                                    <span className="text-[10px] opacity-60 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a 
+                                    href="https://yayasan.limfiq.my.id" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-slate-300 hover:text-blue-400 transition-colors inline-flex items-center gap-1 group"
+                                >
+                                    <span>🏛️ Yayasan</span>
+                                    <span className="text-[10px] opacity-60 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
 
