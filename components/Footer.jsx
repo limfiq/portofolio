@@ -61,6 +61,8 @@ const Footer = () => {
                             <li><Link href="/about" className="text-slate-300 hover:text-blue-400 hover:underline transition-colors">Tentang Saya</Link></li>
                             <li><Link href="/publications" className="text-slate-300 hover:text-blue-400 hover:underline transition-colors">Publikasi Ilmiah</Link></li>
                             <li><Link href="/penelitian-pengabdian" className="text-slate-300 hover:text-blue-400 hover:underline transition-colors">Penelitian & Pengabdian</Link></li>
+                            <li><Link href="/awards" className="text-slate-300 hover:text-blue-400 hover:underline transition-colors">Penghargaan</Link></li>
+                            <li><Link href="/gallery" className="text-slate-300 hover:text-blue-400 hover:underline transition-colors">Galeri Foto</Link></li>
                             <li><Link href="/lecturer" className="text-slate-300 hover:text-blue-400 hover:underline transition-colors">Aktivitas Mengajar</Link></li>
                             <li><Link href="/loker" className="text-slate-300 hover:text-blue-400 hover:underline transition-colors">Loker IT</Link></li>
                             <li><Link href="/contact" className="text-slate-300 hover:text-blue-400 hover:underline transition-colors">Kontak</Link></li>

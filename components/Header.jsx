@@ -47,6 +47,8 @@ const Header = () => {
         { href: "/publications", label: "Publikasi" },
         { href: "/penelitian", label: "Penelitian" },
         { href: "/pengabdian", label: "Pengabdian" },
+        { href: "/awards", label: "Penghargaan" },
+        { href: "/gallery", label: "Galeri" },
       ]
     },
     { href: "/lecturer", label: "Pengajaran" },
@@ -89,6 +91,8 @@ const Header = () => {
     "/pengabdian",
     "/loker",
     "/blog",
+    "/awards",
+    "/gallery",
   ];
 
   const isDarkPage = darkPages.includes(pathname);

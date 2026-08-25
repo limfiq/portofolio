@@ -96,6 +96,7 @@ export default function DashboardLayout({ children }) {
         { name: "Tulisan", href: "/manage/dashboard/blogs", icon: paths.blog, category: "Pages" },
         { name: "Loker", href: "/manage/dashboard/loker", icon: "M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z", category: "Pages" },
         { name: "Penghargaan", href: "/manage/dashboard/awards", icon: "M12 8c-1.657 0-3 1.343-3 3 0 .584.166 1.127.45 1.585l-1.373.916A4.992 4.992 0 017 11c0-2.761 2.239-5 5-5s5 2.239 5 5c0 .991-.288 1.914-.784 2.69l-1.373-.916c.284-.458.45-1.001.45-1.585 0-1.657-1.343-3-3-3zm0 6c1.105 0 2 .895 2 2v2a2 2 0 11-4 0v-2c0-1.105.895-2 2-2z", category: "Pages" },
+        { name: "Galeri", href: "/manage/dashboard/gallery", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z", category: "Pages" },
     ];
 
     const groupedNav = navItems.reduce((acc, item) => {

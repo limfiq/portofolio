@@ -177,9 +177,60 @@ export default function LokerAdminPage() {
     };
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingJobId, setEditingJobId] = useState(null);
     const [manualForm, setManualForm] = useState(defaultManualForm);
     const [submittingManual, setSubmittingManual] = useState(false);
     const [fetchingUrl, setFetchingUrl] = useState(false);
+
+    const openCreateModal = () => {
+        setEditingJobId(null);
+        setManualForm(defaultManualForm);
+        setIsModalOpen(true);
+    };
+
+    const openEditModal = (job) => {
+        setEditingJobId(job.id);
+        
+        // Parse existing location into scope, city, and workMode
+        const scopeInfo = getLocationScope(job);
+        let parsedCity = job.location || "";
+        let parsedWorkMode = "WFO / On-site";
+        
+        const locLower = (job.location || "").toLowerCase();
+        if (locLower.includes("remote") || locLower.includes("wfh")) {
+            parsedWorkMode = "Remote / WFH";
+        } else if (locLower.includes("hybrid")) {
+            parsedWorkMode = "Hybrid";
+        }
+        
+        // Clean city string from annotations
+        parsedCity = parsedCity
+            .replace(/\s*\((Remote|Hybrid|WFH|WFO)\)/gi, "")
+            .replace(/,\s*Indonesia\b/gi, "")
+            .replace(/\bIndonesia\b/gi, "")
+            .trim();
+            
+        if (!parsedCity) {
+            parsedCity = scopeInfo.scope === "Dalam Negeri" ? "Jakarta" : "Singapura";
+        }
+
+        setManualForm({
+            title: job.title || "",
+            company: job.company || "",
+            scope: scopeInfo.scope,
+            city: parsedCity,
+            workMode: parsedWorkMode,
+            type: job.type || "Full-time",
+            link: job.link || "",
+            source: job.source || "Manual",
+            description: job.description || ""
+        });
+        
+        if (selectedAdminJob) {
+            setSelectedAdminJob(null);
+        }
+        setIsModalOpen(true);
+    };
 
     const handleFetchUrlData = async () => {
         if (!manualForm.link) {
@@ -251,16 +302,38 @@ export default function LokerAdminPage() {
             description: manualForm.description.trim()
         };
 
-        const { error } = await supabase.from("job_vacancies").insert([payload]);
-        setSubmittingManual(false);
-        if (error) {
-            alert("Gagal menambahkan loker: " + error.message);
+        if (editingJobId) {
+            const { error } = await supabase
+                .from("job_vacancies")
+                .update(payload)
+                .eq("id", editingJobId);
+                
+            setSubmittingManual(false);
+            if (error) {
+                alert("Gagal memperbarui loker: " + error.message);
+            } else {
+                setIsModalOpen(false);
+                setEditingJobId(null);
+                setManualForm(defaultManualForm);
+                fetchJobs(page);
+                fetchCount();
+            }
         } else {
-            setIsModalOpen(false);
-            setManualForm(defaultManualForm);
-            fetchJobs(0);
-            setPage(0);
-            fetchCount();
+            const { error } = await supabase
+                .from("job_vacancies")
+                .insert([payload]);
+                
+            setSubmittingManual(false);
+            if (error) {
+                alert("Gagal menambahkan loker: " + error.message);
+            } else {
+                setIsModalOpen(false);
+                setEditingJobId(null);
+                setManualForm(defaultManualForm);
+                fetchJobs(0);
+                setPage(0);
+                fetchCount();
+            }
         }
     };
 
@@ -273,7 +346,7 @@ export default function LokerAdminPage() {
                 </div>
                 <div className="flex items-center gap-3">
                     <button 
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={openCreateModal}
                         className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2"
                     >
                         <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -351,8 +424,9 @@ export default function LokerAdminPage() {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <button onClick={() => setSelectedAdminJob(job)} className="text-indigo-600 hover:text-indigo-900 mr-4 font-semibold">Detail</button>
-                                                    <a href={job.link} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-950 mr-4">Link Asli</a>
+                                                    <button onClick={() => setSelectedAdminJob(job)} className="text-indigo-600 hover:text-indigo-900 mr-3 font-semibold">Detail</button>
+                                                    <button onClick={() => openEditModal(job)} className="text-amber-600 hover:text-amber-800 mr-3 font-semibold">Edit</button>
+                                                    <a href={job.link} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-950 mr-3">Link Asli</a>
                                                     <button onClick={() => handleDeleteJob(job.id)} className="text-red-600 hover:text-red-900">Hapus</button>
                                                 </td>
                                             </tr>
@@ -426,9 +500,11 @@ export default function LokerAdminPage() {
                         <div className="flex justify-between items-center pb-4 mb-4 border-b border-gray-100">
                             <div>
                                 <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                    <span>➕ Tambah Loker Baru</span>
+                                    <span>{editingJobId ? "✏️ Edit Lowongan Kerja" : "➕ Tambah Loker Baru"}</span>
                                 </h3>
-                                <p className="text-xs text-gray-500">Isi form detail atau gunakan Isi Otomatis dari URL loker</p>
+                                <p className="text-xs text-gray-500">
+                                    {editingJobId ? "Perbarui informasi detail lowongan kerja" : "Isi form detail atau gunakan Isi Otomatis dari URL loker"}
+                                </p>
                             </div>
                             <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-xl hover:bg-gray-100 transition-colors">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -651,7 +727,7 @@ export default function LokerAdminPage() {
                                     disabled={submittingManual} 
                                     className="flex-1 bg-indigo-600 text-white rounded-xl py-2.5 text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50 shadow-md shadow-indigo-100"
                                 >
-                                    {submittingManual ? 'Menyimpan ke Database...' : '💾 Simpan Loker ke Database'}
+                                    {submittingManual ? 'Menyimpan...' : (editingJobId ? '💾 Simpan Perubahan' : '💾 Simpan Loker ke Database')}
                                 </button>
                                 <button 
                                     type="button" 
@@ -708,6 +784,12 @@ export default function LokerAdminPage() {
                             )}
                         </div>
                         <div className="flex justify-end gap-3 border-t border-gray-100 pt-3">
+                            <button 
+                                onClick={() => openEditModal(selectedAdminJob)} 
+                                className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5 shadow-sm shadow-amber-200"
+                            >
+                                <span>✏️ Edit Loker</span>
+                            </button>
                             <a href={selectedAdminJob.link} target="_blank" rel="noopener noreferrer" className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors">
                                 Kunjungi Link Sumber
                             </a>
