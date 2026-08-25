@@ -164,8 +164,20 @@ export default function LokerAdminPage() {
     const [selectedAdminJob, setSelectedAdminJob] = useState(null);
 
     // Modal state for Manual Entry
+    const defaultManualForm = {
+        title: "",
+        company: "",
+        scope: "Dalam Negeri", // 'Dalam Negeri' or 'Luar Negeri'
+        city: "Jakarta",
+        workMode: "WFO / On-site", // 'WFO / On-site', 'Remote / WFH', 'Hybrid'
+        type: "Full-time",
+        link: "",
+        source: "Manual / LinkedIn",
+        description: ""
+    };
+
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [manualForm, setManualForm] = useState({ title: "", company: "", location: "", type: "Full-time", link: "", source: "Manual / Sosial Media", description: "" });
+    const [manualForm, setManualForm] = useState(defaultManualForm);
     const [submittingManual, setSubmittingManual] = useState(false);
     const [fetchingUrl, setFetchingUrl] = useState(false);
 
@@ -183,12 +195,17 @@ export default function LokerAdminPage() {
             });
             const data = await res.json();
             if (res.ok) {
+                // Infer remote mode from scraped text
+                const textToCheck = `${data.title} ${data.description}`.toLowerCase();
+                const isRemote = textToCheck.includes("remote") || textToCheck.includes("wfh");
+                
                 setManualForm(prev => ({
                     ...prev,
                     title: data.title || prev.title,
                     description: data.description || prev.description,
                     company: data.company || prev.company,
-                    source: data.source !== "Manual / Sosial Media" ? data.source : prev.source
+                    source: data.source && data.source !== "Manual / Sosial Media" ? `Manual / ${data.source}` : prev.source,
+                    workMode: isRemote ? "Remote / WFH" : prev.workMode
                 }));
             } else {
                 alert("Gagal mengambil data dari URL: " + (data.error || "Unknown error"));
@@ -202,13 +219,45 @@ export default function LokerAdminPage() {
     const handleManualSubmit = async (e) => {
         e.preventDefault();
         setSubmittingManual(true);
-        const { error } = await supabase.from("job_vacancies").insert([manualForm]);
+
+        // Format clean location string that guarantees accurate scope & remote badge detection
+        let formattedLocation = "";
+        const rawCity = (manualForm.city || "").trim();
+
+        if (manualForm.scope === "Dalam Negeri") {
+            const cityName = rawCity || "Indonesia";
+            formattedLocation = cityName.toLowerCase().includes("indonesia") ? cityName : `${cityName}, Indonesia`;
+        } else {
+            formattedLocation = rawCity || "Luar Negeri";
+        }
+
+        if (manualForm.workMode === "Remote / WFH") {
+            if (!formattedLocation.toLowerCase().includes("remote")) {
+                formattedLocation += " (Remote)";
+            }
+        } else if (manualForm.workMode === "Hybrid") {
+            if (!formattedLocation.toLowerCase().includes("hybrid")) {
+                formattedLocation += " (Hybrid)";
+            }
+        }
+
+        const payload = {
+            title: manualForm.title.trim(),
+            company: manualForm.company.trim(),
+            location: formattedLocation,
+            type: manualForm.type,
+            link: manualForm.link.trim(),
+            source: manualForm.source || "Manual",
+            description: manualForm.description.trim()
+        };
+
+        const { error } = await supabase.from("job_vacancies").insert([payload]);
         setSubmittingManual(false);
         if (error) {
             alert("Gagal menambahkan loker: " + error.message);
         } else {
             setIsModalOpen(false);
-            setManualForm({ title: "", company: "", location: "", type: "Full-time", link: "", source: "Manual / Sosial Media", description: "" });
+            setManualForm(defaultManualForm);
             fetchJobs(0);
             setPage(0);
             fetchCount();
@@ -371,60 +420,248 @@ export default function LokerAdminPage() {
 
             {/* Modal Tambah Manual */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-md p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-bold text-gray-900">Tambah Loker Manual</h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl w-full max-w-xl p-6 md:p-7 shadow-2xl max-h-[92vh] flex flex-col overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="flex justify-between items-center pb-4 mb-4 border-b border-gray-100">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span>➕ Tambah Loker Baru</span>
+                                </h3>
+                                <p className="text-xs text-gray-500">Isi form detail atau gunakan Isi Otomatis dari URL loker</p>
+                            </div>
+                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-xl hover:bg-gray-100 transition-colors">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
-                        <form onSubmit={handleManualSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1">Posisi Pekerjaan</label>
-                                <input required type="text" value={manualForm.title} onChange={e => setManualForm({...manualForm, title: e.target.value})} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Contoh: Frontend Developer" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1">Nama Perusahaan</label>
-                                <input required type="text" value={manualForm.company} onChange={e => setManualForm({...manualForm, company: e.target.value})} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Contoh: PT. Inovasi Bangsa" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-1">Lokasi</label>
-                                    <input type="text" value={manualForm.location} onChange={e => setManualForm({...manualForm, location: e.target.value})} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Contoh: Jakarta / WFO" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-1">Tipe</label>
-                                    <select value={manualForm.type} onChange={e => setManualForm({...manualForm, type: e.target.value})} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                                        <option value="Full-time">Full-time</option>
-                                        <option value="Part-time">Part-time</option>
-                                        <option value="Internship">Internship</option>
-                                        <option value="Contract">Contract</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1">Link Pendaftaran (Wajib)</label>
-                                <div className="flex gap-2 items-start">
-                                    <input required type="url" value={manualForm.link} onChange={e => setManualForm({...manualForm, link: e.target.value})} className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://projects.co.id/... atau link valid" />
+
+                        {/* Modal Scrollable Form Body */}
+                        <form onSubmit={handleManualSubmit} className="space-y-4 overflow-y-auto pr-1 flex-1">
+                            {/* Link Pendaftaran & Auto Fetch */}
+                            <div className="bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100">
+                                <label className="block text-xs font-bold text-indigo-900 mb-1">
+                                    🔗 Link Pendaftaran / URL Sumber (Wajib)
+                                </label>
+                                <div className="flex gap-2 items-center">
+                                    <input 
+                                        required 
+                                        type="url" 
+                                        value={manualForm.link} 
+                                        onChange={e => setManualForm({...manualForm, link: e.target.value})} 
+                                        className="flex-1 bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" 
+                                        placeholder="https://projects.co.id/... atau linkedin.com/jobs/..." 
+                                    />
                                     <button 
                                         type="button" 
                                         onClick={handleFetchUrlData}
                                         disabled={fetchingUrl || !manualForm.link}
-                                        className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-2 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 border border-indigo-200 whitespace-nowrap"
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 shadow-sm shadow-indigo-200 whitespace-nowrap flex items-center gap-1.5"
                                     >
-                                        {fetchingUrl ? "Mencari..." : "Isi Otomatis ⚡"}
+                                        {fetchingUrl ? (
+                                            <>
+                                                <span className="animate-spin text-xs">⏳</span>
+                                                <span>Mencari...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>⚡ Isi Otomatis</span>
+                                            </>
+                                        )}
                                     </button>
                                 </div>
-                                <p className="text-[10px] text-gray-400 mt-1">Isi otomatis mendukung projects.co.id, Upwork, Freelancer, Jobstreet, dll.</p>
+                                <p className="text-[10px] text-indigo-700/70 mt-1">Dapat mengisi judul, perusahaan, dan deskripsi secara otomatis dari website lowongan.</p>
                             </div>
+
+                            {/* Posisi & Perusahaan */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Posisi Pekerjaan</label>
+                                    <input 
+                                        required 
+                                        type="text" 
+                                        value={manualForm.title} 
+                                        onChange={e => setManualForm({...manualForm, title: e.target.value})} 
+                                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50 focus:bg-white" 
+                                        placeholder="Contoh: Senior Backend Engineer" 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Nama Perusahaan</label>
+                                    <input 
+                                        required 
+                                        type="text" 
+                                        value={manualForm.company} 
+                                        onChange={e => setManualForm({...manualForm, company: e.target.value})} 
+                                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50 focus:bg-white" 
+                                        placeholder="Contoh: PT. Telkom Indonesia" 
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Wilayah / Scope (Dalam Negeri vs Luar Negeri) */}
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1">Deskripsi Pekerjaan (Opsional)</label>
-                                <textarea value={manualForm.description} onChange={e => setManualForm({...manualForm, description: e.target.value})} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none h-24" placeholder="Kualifikasi, deskripsi pekerjaan, dll..."></textarea>
+                                <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                                    📍 Wilayah Cakupan (Dalam / Luar Negeri)
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setManualForm(prev => ({ ...prev, scope: "Dalam Negeri", city: prev.city === "Luar Negeri" || !prev.city ? "Jakarta" : prev.city }))}
+                                        className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                                            manualForm.scope === "Dalam Negeri"
+                                                ? "bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-200"
+                                                : "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100/70"
+                                        }`}
+                                    >
+                                        <span>🇮🇩</span>
+                                        <span>Dalam Negeri (Indonesia)</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setManualForm(prev => ({ ...prev, scope: "Luar Negeri", city: prev.city === "Jakarta" || !prev.city ? "Singapura" : prev.city }))}
+                                        className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                                            manualForm.scope === "Luar Negeri"
+                                                ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200"
+                                                : "bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100/70"
+                                        }`}
+                                    >
+                                        <span>🌐</span>
+                                        <span>Luar Negeri (Internasional)</span>
+                                    </button>
+                                </div>
                             </div>
-                            <button type="submit" disabled={submittingManual} className="w-full bg-blue-600 text-white rounded-lg py-2 text-sm font-bold hover:bg-blue-700 transition-colors disabled:opacity-50">
-                                {submittingManual ? 'Menyimpan...' : 'Simpan Loker'}
-                            </button>
+
+                            {/* Kota / Wilayah Spesifik & Mode Kerja */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                                        {manualForm.scope === "Dalam Negeri" ? "Kota / Wilayah di Indonesia" : "Kota / Negara Asal"}
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        value={manualForm.city} 
+                                        onChange={e => setManualForm({...manualForm, city: e.target.value})} 
+                                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50 focus:bg-white" 
+                                        placeholder={manualForm.scope === "Dalam Negeri" ? "Contoh: Jakarta, Bandung, Surabaya, Bali, dll" : "Contoh: Singapura, Berlin / Jerman, Tokyo, dll"} 
+                                    />
+                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                        {(manualForm.scope === "Dalam Negeri" 
+                                            ? ["Jakarta", "Bandung", "Surabaya", "Yogyakarta", "Bali", "Remote Indonesia"] 
+                                            : ["Singapura", "Malaysia", "Berlin, Germany", "Tokyo, Japan", "Global Remote"]
+                                        ).map(sugg => (
+                                            <button
+                                                key={sugg}
+                                                type="button"
+                                                onClick={() => setManualForm(prev => ({ ...prev, city: sugg }))}
+                                                className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded"
+                                            >
+                                                {sugg}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Sistem / Mode Kerja</label>
+                                    <select 
+                                        value={manualForm.workMode} 
+                                        onChange={e => setManualForm({...manualForm, workMode: e.target.value})} 
+                                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                    >
+                                        <option value="WFO / On-site">🏢 On-site / WFO (Kantor)</option>
+                                        <option value="Remote / WFH">🏠 Remote / WFH (Kerja Jarak Jauh)</option>
+                                        <option value="Hybrid">🔄 Hybrid (Kombinasi Kantor & Rumah)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Tipe Kontrak & Sumber Loker */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Tipe Pekerjaan</label>
+                                    <select 
+                                        value={manualForm.type} 
+                                        onChange={e => setManualForm({...manualForm, type: e.target.value})} 
+                                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                    >
+                                        <option value="Full-time">Full-time</option>
+                                        <option value="Part-time">Part-time</option>
+                                        <option value="Internship">Internship / Magang</option>
+                                        <option value="Contract">Contract / Kontrak</option>
+                                        <option value="Freelance">Freelance / Proyek</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Sumber Informasi</label>
+                                    <input 
+                                        type="text" 
+                                        value={manualForm.source} 
+                                        onChange={e => setManualForm({...manualForm, source: e.target.value})} 
+                                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50 focus:bg-white" 
+                                        placeholder="Contoh: Manual / LinkedIn" 
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Live Badge Preview */}
+                            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                                <div className="text-[11px] font-bold text-slate-500 mb-1.5 flex items-center justify-between">
+                                    <span>👁️ Preview Tampilan Badge & Lokasi:</span>
+                                    <span className="text-[10px] text-slate-400 font-normal">Otomatis diformat saat disimpan</span>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                                        manualForm.scope === "Dalam Negeri" 
+                                            ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
+                                            : "bg-blue-50 text-blue-700 border-blue-200"
+                                    }`}>
+                                        {manualForm.scope === "Dalam Negeri" ? "🇮🇩 Dalam Negeri" : "🌐 Luar Negeri"}
+                                    </span>
+                                    {manualForm.workMode === "Remote / WFH" && (
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                                            🏠 Remote
+                                        </span>
+                                    )}
+                                    <span className="text-[10px] bg-slate-100 text-slate-600 font-medium px-2 py-0.5 rounded">
+                                        {manualForm.type}
+                                    </span>
+                                </div>
+                                <div className="text-xs font-semibold text-slate-700">
+                                    {manualForm.company || "Nama Perusahaan"} • {manualForm.city || (manualForm.scope === "Dalam Negeri" ? "Indonesia" : "Luar Negeri")}
+                                    {manualForm.workMode === "Remote / WFH" ? " (Remote)" : manualForm.workMode === "Hybrid" ? " (Hybrid)" : ""}
+                                </div>
+                            </div>
+
+                            {/* Deskripsi Pekerjaan */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Deskripsi & Kualifikasi Pekerjaan (Opsional)</label>
+                                <textarea 
+                                    value={manualForm.description} 
+                                    onChange={e => setManualForm({...manualForm, description: e.target.value})} 
+                                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none h-24 bg-slate-50 focus:bg-white leading-relaxed" 
+                                    placeholder="Tuliskan tanggung jawab, kualifikasi teknis, benefit, dll..."
+                                />
+                            </div>
+
+                            {/* Submit Buttons */}
+                            <div className="pt-2 flex gap-3">
+                                <button 
+                                    type="submit" 
+                                    disabled={submittingManual} 
+                                    className="flex-1 bg-indigo-600 text-white rounded-xl py-2.5 text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50 shadow-md shadow-indigo-100"
+                                >
+                                    {submittingManual ? 'Menyimpan ke Database...' : '💾 Simpan Loker ke Database'}
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => setIsModalOpen(false)}
+                                    disabled={submittingManual}
+                                    className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-colors"
+                                >
+                                    Batal
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>

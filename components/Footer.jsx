@@ -95,12 +95,12 @@ const Footer = () => {
                             </li>
                             <li>
                                 <a 
-                                    href="https://yayasan.limfiq.my.id" 
+                                    href="https://sdidarulfaizin.my.id" 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
                                     className="text-slate-300 hover:text-blue-400 transition-colors inline-flex items-center gap-1 group"
                                 >
-                                    <span>🏛️ Yayasan</span>
+                                    <span>🏛️ SDIT Darul Faizin</span>
                                     <span className="text-[10px] opacity-60 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
                                 </a>
                             </li>

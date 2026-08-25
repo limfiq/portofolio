@@ -70,7 +70,7 @@ export function getLocationScope(job) {
         "indonesia", "jakarta", "bandung", "surabaya", "yogyakarta", "jogja", 
         "bali", "semarang", "medan", "makassar", "malang", "tangerang", 
         "bekasi", "depok", "bogor", "batam", "palembang", "pekanbaru", 
-        "denpasar", "solo", "surakarta", "projects.co.id", "glints", "jobstreet.co.id"
+        "denpasar", "solo", "surakarta", "dalam negeri", "projects.co.id", "glints", "jobstreet.co.id"
     ];
     
     const isIndo = indoKeywords.some(kw => loc.includes(kw) || src.includes(kw) || comp.includes(kw));
