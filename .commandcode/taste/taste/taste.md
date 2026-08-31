@@ -1,5 +1,6 @@
 # Taste
 - Communicates in Indonesian (Bahasa Indonesia); requests and explanations should be in Indonesian. Confidence: 0.9
+- Attentive to visual/layout details of the rendered UI and reports positioning discrepancies via screenshots; expects elements to sit exactly where specified (e.g., the "Hubungi" footer column must be on the far right, aligned with "Aplikasi Web" on desktop). Confidence: 0.5
 - Wants app content shown to end users to be in Indonesian too — foreign-sourced content (e.g., job listings from abroad) should be translated/localized to Indonesian rather than left in the original language. Confidence: 0.6
 - Prefers the assistant to analyze/explore the project first before implementing a requested change (e.g., "analisis project ini, kemudian tambahkan source scraping"). Confidence: 0.8
 - When a requested data source is blocked or unavailable (e.g., loker.id behind Cloudflare), prefers the assistant to actively find and evaluate alternative sources rather than stopping at the limitation ("ok coba carikan lagi"; confirmed again with "ok" to an offer to search for alternatives). Confidence: 0.7

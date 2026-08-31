@@ -6,7 +6,7 @@ const Footer = () => {
             <div className="max-w-7xl mx-auto px-6">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8 mb-12">
                     {/* Brand Column */}
-                    <div className="md:col-span-6 flex flex-col justify-between">
+                    <div className="md:col-span-5 flex flex-col justify-between">
                         <div>
                             <Link href="/" className="text-2xl font-extrabold text-white tracking-tight hover:opacity-90 transition-opacity mb-4 block">
                                 M. Taufiq, M.Kom
