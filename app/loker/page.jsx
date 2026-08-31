@@ -70,7 +70,7 @@ export function getLocationScope(job) {
         "indonesia", "jakarta", "bandung", "surabaya", "yogyakarta", "jogja", 
         "bali", "semarang", "medan", "makassar", "malang", "tangerang", 
         "bekasi", "depok", "bogor", "batam", "palembang", "pekanbaru", 
-        "denpasar", "solo", "surakarta", "dalam negeri", "projects.co.id", "glints", "jobstreet.co.id"
+        "denpasar", "solo", "surakarta", "dalam negeri", "lokernas", "projects.co.id", "glints", "jobstreet.co.id"
     ];
     
     const isIndo = indoKeywords.some(kw => loc.includes(kw) || src.includes(kw) || comp.includes(kw));
@@ -210,6 +210,11 @@ export default function LokerPublicPage() {
     const [uploading, setUploading] = useState(false);
     const [applyMessage, setApplyMessage] = useState(null);
 
+    // Translate state (untuk loker luar negeri)
+    const [translating, setTranslating] = useState(false);
+    const [translatedData, setTranslatedData] = useState(null); // { title, description } hasil translate
+    const [translateError, setTranslateError] = useState(null);
+
     // Auth check
     useEffect(() => {
         const checkUser = async () => {
@@ -342,7 +347,42 @@ export default function LokerPublicPage() {
         setSelectedJob(job);
         setCvFile(null);
         setApplyMessage(null);
+        setTranslatedData(null);
+        setTranslateError(null);
         setShowModal(true);
+    };
+
+    const handleTranslate = async () => {
+        if (!selectedJob || translating) return;
+
+        setTranslating(true);
+        setTranslateError(null);
+
+        try {
+            const res = await fetch("/api/loker/translate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    title: selectedJob.title,
+                    description: selectedJob.description || ""
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || "Gagal menerjemahkan loker.");
+            }
+
+            setTranslatedData({
+                title: data.title || selectedJob.title,
+                description: data.description || selectedJob.description || ""
+            });
+        } catch (error) {
+            console.error("Translate error:", error);
+            setTranslateError(error.message || "Terjadi kesalahan saat menerjemahkan.");
+        } finally {
+            setTranslating(false);
+        }
     };
 
     const handleApply = async (e) => {
@@ -693,7 +733,14 @@ export default function LokerPublicPage() {
                                             {selectedJob.type || "Full-time"}
                                         </span>
                                     </div>
-                                    <h3 className="text-xl font-bold text-slate-800">{cleanJobTitle(selectedJob.title)}</h3>
+                                    <h3 className="text-xl font-bold text-slate-800">
+                                        {translatedData ? cleanJobTitle(translatedData.title) : cleanJobTitle(selectedJob.title)}
+                                        {translatedData && (
+                                            <span className="ml-2 align-middle text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                🇮🇩 ID
+                                            </span>
+                                        )}
+                                    </h3>
                                     <p className="text-sm text-slate-600 mt-1">
                                         <strong>{selectedJob.company}</strong> • {selectedJob.location}
                                     </p>
@@ -708,9 +755,76 @@ export default function LokerPublicPage() {
 
                             {/* Modal Body (Scrollable description) */}
                             <div className="p-6 overflow-y-auto flex-1">
-                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Deskripsi Pekerjaan:</h4>
-                                {selectedJob.description ? (
-                                    <div 
+                                <div className="flex items-center justify-between mb-3">
+                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Deskripsi Pekerjaan:
+                                    </h4>
+                                    {modalScope.scope === "Luar Negeri" && (
+                                        <button
+                                            onClick={handleTranslate}
+                                            disabled={translating}
+                                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                                                translatedData
+                                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                                    : "bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100"
+                                            } disabled:opacity-60 disabled:cursor-not-allowed`}
+                                        >
+                                            {translating ? (
+                                                <>
+                                                    <span className="inline-block animate-spin">⏳</span>
+                                                    Menerjemahkan...
+                                                </>
+                                            ) : translatedData ? (
+                                                <>
+                                                    ✓ Sudah Diterjemahkan
+                                                </>
+                                            ) : (
+                                                <>
+                                                    🌐 Terjemahkan ke Bahasa Indonesia
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {translateError && (
+                                    <div className="p-3 rounded-lg mb-3 text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+                                        {translateError}
+                                    </div>
+                                )}
+
+                                {translatedData ? (
+                                    <>
+                                        <div className="mb-2 flex items-center gap-2">
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                🇮🇩 Terjemahan Bahasa Indonesia
+                                            </span>
+                                        </div>
+                                        {translatedData.description ? (
+                                            <div
+                                                className="text-sm text-slate-700 leading-relaxed pr-2 break-words job-description-html"
+                                                dangerouslySetInnerHTML={{ __html: cleanHtmlClient(translatedData.description) }}
+                                            />
+                                        ) : (
+                                            <p className="text-slate-400 italic text-sm">Tidak ada deskripsi detail untuk lowongan ini. Anda dapat melihat informasi lengkap di website sumber.</p>
+                                        )}
+                                        <div className="mt-4 pt-4 border-t border-dashed border-slate-200">
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                                                🇬🇧 Teks Asli (Bahasa Asing)
+                                            </span>
+                                        </div>
+                                        <details className="mt-2">
+                                            <summary className="text-xs font-semibold text-slate-500 cursor-pointer hover:text-indigo-600 transition-colors">
+                                                Lihat teks asli
+                                            </summary>
+                                            <div
+                                                className="mt-2 text-sm text-slate-500 leading-relaxed pr-2 break-words job-description-html"
+                                                dangerouslySetInnerHTML={{ __html: cleanHtmlClient(selectedJob.description) }}
+                                            />
+                                        </details>
+                                    </>
+                                ) : selectedJob.description ? (
+                                    <div
                                         className="text-sm text-slate-700 leading-relaxed pr-2 break-words job-description-html"
                                         dangerouslySetInnerHTML={{ __html: cleanHtmlClient(selectedJob.description) }}
                                     />

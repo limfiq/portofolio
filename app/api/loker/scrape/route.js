@@ -118,6 +118,82 @@ function cleanJobTitle(title) {
     return clean;
 }
 
+// Helper untuk mengekstrak nama perusahaan dari judul artikel (mis. "PT Freeport Indonesia")
+function extractCompany(title) {
+    if (!title) return "";
+    const t = title.trim();
+    // Cari pola "PT/Nama" — utamakan setelah "Lowongan Kerja" atau di akhir judul
+    const patterns = [
+        /(?:Lowongan (?:Kerja|Pekerjaan)|Rekrutmen|Open Recruitment)[^A-Za-z0-9]*(PT\.?\s*[A-Z][A-Za-z0-9&.\- ]{2,}?)(?=\s*(?:Tahun|Periode|di\s+[A-Z]|\(|\d{4})|$)/i,
+        /(PT\s*\.?\s*[A-Z][A-Za-z0-9&.\- ]{2,}?)(?=\s*(?:Tahun|Periode|di\s+[A-Z]|\(|\d{4})|$)/i,
+        /(?:Lowongan (?:Kerja|Pekerjaan)|Rekrutmen|Open Recruitment)[^A-Za-z0-9]*([A-Z][A-Za-z0-9&.\- ]{2,})/i
+    ];
+    for (const pattern of patterns) {
+        const match = t.match(pattern);
+        if (match && match[1]) {
+            let company = match[1].trim().replace(/\s+/g, " ");
+            // Hapus bagian yang jelas bukan nama perusahaan: lokasi dalam kurung, tahun, "di <kota>"
+            company = company.replace(/\s*(?:\([^)]*\)|\d{4}|di\s+[A-Za-z][A-Za-z ]+)$/i, "").trim();
+            // Potong sisa kata kunci generic yang menempel di ujung (mis. "RSUD Pontianak Utara Tahun 2026")
+            company = company.replace(/\s+(?:Tahun|Periode)\s+\d{4}$/i, "").trim();
+            if (company.length >= 4) {
+                return company;
+            }
+            return company;
+        }
+    }
+    return t;
+}
+
+// Helper untuk mengekstrak lokasi dari judul / konten artikel
+function extractLocation(title, description) {
+    const locPatterns = [
+        /(?:di|penempatan[:\s]*)[:\s]*(jakarta|bandung|surabaya|yogyakarta|jogja|semarang|medan|makassar|malang|tangerang|bekasi|depok|bogor|batam|palembang|pekanbaru|denpasar|solo|surakarta|pontianak|gresik|timika|tembagapura|balikpapan|samarinda|bali|lombok|papua|kalimantan|sumatera|sulawesi|jawa\s+\w+)/i,
+        /\(([^)]*(?:jakarta|bandung|surabaya|jogja|jawa|indonesia)[^)]*)\)/i,
+        /(?:jakarta|bandung|surabaya|yogyakarta|jogja|semarang|medan|makassar|malang|tangerang|bekasi|depok|bogor|batam|palembang|denpasar|pontianak|gresik|timika|tembagapura)\s*(?:,|\.|$|\))/i
+    ];
+    for (const pattern of locPatterns) {
+        const match = (title + " " + (description || "")).match(pattern);
+        if (match && match[0]) {
+            let loc = match[0].replace(/^(di|penempatan[:\s]*)[:\s]*/i, "").replace(/[(),.\s]+$/g, "").trim();
+            // Hapus kurung pembuka yang nyangkut (mis. "(Surabaya")
+            loc = loc.replace(/^[()]+/, "").trim();
+            if (loc.length > 3 && loc.length < 60) {
+                return loc;
+            }
+        }
+    }
+    return "Indonesia";
+}
+
+// Helper untuk mengekstrak link pendaftaran asli dari konten artikel
+function extractApplyLink(contentHtml) {
+    if (!contentHtml) return "";
+    const $ = cheerio.load(contentHtml, null, false);
+    const ignored = /blogger\.googleusercontent|lokernas\.com|bit\.ly|tinyurl\.com|linktr\.ee|t\.me|whatsapp|instagram\.com|facebook\.com|youtube\.com|twitter\.com|linkedin\.com|google\.com\/file|drive\.google|feeds\./i;
+    let link = "";
+    $("a[href]").each((_, el) => {
+        const href = $(el).attr("href");
+        if (!href || ignored.test(href)) return;
+        const text = $(el).text().trim().toLowerCase();
+        // Prioritas: link berlabel daftar/pendaftaran/apply/karir, atau href non-blogger
+        if (/daftar|pendaftaran|apply|karir|career|recruitment|melamar/.test(text) || /(?:jobs?|career|karir|recruitment|lowongan)/i.test(href)) {
+            link = href;
+            return false; // stop setelah dapat yang paling relevan
+        }
+    });
+    if (!link) {
+        // Fallback: link eksternal pertama (non-blogger)
+        $("a[href]").each((_, el) => {
+            const href = $(el).attr("href");
+            if (!href || ignored.test(href)) return;
+            link = href;
+            return false;
+        });
+    }
+    return link;
+}
+
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
@@ -238,6 +314,54 @@ async function runScrape(req) {
         } catch (e) {
             console.error("Error fetching Jobicy:", e.message);
             sourceErrors.push(`Jobicy: ${e.message}`);
+        }
+
+        // 4. Fetch dari Lokernas (Loker Dalam Negeri / BUMN, CPNS, Swasta Indonesia)
+        try {
+            const lokernasRes = await fetch("https://www.lokernas.com/feeds/posts/default?alt=rss&max-results=25", {
+                signal: AbortSignal.timeout(15000),
+                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }
+            });
+            if (lokernasRes.ok) {
+                const xml = await lokernasRes.text();
+                const $ = cheerio.load(xml, { xmlMode: true });
+                const entries = $("entry, item");
+                // Filter lowongan yang relevan untuk mahasiswa/calon pekerja IT (strict + umum)
+                const strictIt = /developer|engineer|programmer|data scientist|data engineer|data analyst|software|frontend|backend|fullstack|devops|cloud|cyber|network engineer|security|mobile|ui\/ux|qa tester|analyst|sistem informasi|informatika|komputer|staff ti|teknisi|it |web|it$/i;
+                const looseIt = /digital|teknologi|telekomunikasi|startup|e-commerce|fintech|bank|perbankan|bumn|cpns|pppk|kementerian|lembaga|rsud|rumah sakit|universitas|dosen|guru|pt .* (indonesia|tbk)|lowongan kerja (staff|admin|magang|internship)/i;
+                const isItRelated = (t) => strictIt.test(t) || looseIt.test(t);
+
+                const lokernasJobs = [];
+                entries.each((_, el) => {
+                    const $el = $(el);
+                    const title = $el.find("title").first().text().trim();
+                    if (!title || !isItRelated(title)) return;
+
+                    const rawContent = $el.find("content, description").first().text();
+                    const cleanedDesc = cleanHtmlDescription(rawContent);
+                    // Ambil teks bersih untuk pencarian lokasi (hapus tag & entity)
+                    const textOnly = (rawContent || "")
+                        .replace(/<[^>]*>/g, " ")
+                        .replace(/&nbsp;|&amp;|&quot;|&#\d+;/g, " ")
+                        .replace(/\s+/g, " ");
+
+                    lokernasJobs.push({
+                        title: cleanJobTitle(title),
+                        company: extractCompany(title),
+                        location: extractLocation(title, textOnly),
+                        type: "Full-time",
+                        link: extractApplyLink(rawContent) || ($el.find("link[rel='alternate']").attr("href") || "").replace(/^http:/, "https:"),
+                        source: "Lokernas (Dalam Negeri)",
+                        description: cleanedDesc
+                    });
+                });
+                newJobs = [...newJobs, ...lokernasJobs.slice(0, 15)];
+            } else {
+                sourceErrors.push(`Lokernas status: ${lokernasRes.status}`);
+            }
+        } catch (e) {
+            console.error("Error fetching Lokernas:", e.message);
+            sourceErrors.push(`Lokernas: ${e.message}`);
         }
 
         if (newJobs.length === 0) {
