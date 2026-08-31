@@ -64,7 +64,6 @@ export default function LokerAdminPage() {
     }, []);
 
     const [jobs, setJobs] = useState([]);
-    const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [scraping, setScraping] = useState(false);
     const [message, setMessage] = useState(null);
@@ -94,27 +93,10 @@ export default function LokerAdminPage() {
         }
     }, [supabase]);
 
-    const fetchApplications = useCallback(async () => {
-        // Fetch recent applications with job title
-        const { data, error } = await supabase
-            .from("job_applications")
-            .select(`
-                *,
-                job_vacancies ( title, company )
-            `)
-            .order("applied_at", { ascending: false })
-            .limit(20);
-
-        if (!error && data) {
-            setApplications(data);
-        }
-    }, [supabase]);
-
     useEffect(() => {
         fetchJobs(page);
         fetchCount();
-        fetchApplications();
-    }, [page, fetchJobs, fetchCount, fetchApplications]);
+    }, [page, fetchJobs, fetchCount]);
 
     const handleScrape = async () => {
         setScraping(true);
@@ -137,24 +119,10 @@ export default function LokerAdminPage() {
     };
 
     const handleDeleteJob = async (id) => {
-        if (window.confirm("Yakin ingin menghapus loker ini? (Semua lamaran terkait juga akan terhapus)")) {
+        if (window.confirm("Yakin ingin menghapus loker ini?")) {
             await supabase.from("job_vacancies").delete().eq("id", id);
             fetchJobs(page);
             fetchCount();
-            fetchApplications();
-        }
-    };
-
-    const handleUpdateApplicationStatus = async (id, newStatus) => {
-        const { error } = await supabase
-            .from("job_applications")
-            .update({ status: newStatus })
-            .eq("id", id);
-        
-        if (!error) {
-            fetchApplications();
-        } else {
-            alert("Gagal mengupdate status: " + error.message);
         }
     };
 
@@ -342,7 +310,7 @@ export default function LokerAdminPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800">Manajemen Lowongan Kerja (Loker)</h1>
-                    <p className="text-sm text-gray-500">Kelola data scraping, manual, dan lamaran mahasiswa</p>
+                    <p className="text-sm text-gray-500">Kelola data loker dari hasil scraping dan input manual</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button 
@@ -377,11 +345,13 @@ export default function LokerAdminPage() {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="bg-white shadow-sm border border-gray-100 rounded-xl overflow-hidden">
                 {/* Loker Section */}
-                <div className="lg:col-span-2">
-                    <h2 className="text-xl font-bold text-gray-800 mb-4">Daftar Loker ({totalCount})</h2>
-                    <div className="bg-white shadow-sm border border-gray-100 rounded-xl overflow-x-auto">
+                <div>
+                    <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-gray-100">
+                        <h2 className="text-xl font-bold text-gray-800">Daftar Loker ({totalCount})</h2>
+                    </div>
+                    <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
@@ -423,11 +393,35 @@ export default function LokerAdminPage() {
                                                         {job.source}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <button onClick={() => setSelectedAdminJob(job)} className="text-indigo-600 hover:text-indigo-900 mr-3 font-semibold">Detail</button>
-                                                    <button onClick={() => openEditModal(job)} className="text-amber-600 hover:text-amber-800 mr-3 font-semibold">Edit</button>
-                                                    <a href={job.link} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-950 mr-3">Link Asli</a>
-                                                    <button onClick={() => handleDeleteJob(job.id)} className="text-red-600 hover:text-red-900">Hapus</button>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                    <div className="inline-flex items-center gap-2">
+                                                        <button 
+                                                            onClick={() => setSelectedAdminJob(job)} 
+                                                            className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-colors"
+                                                        >
+                                                            Detail
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => openEditModal(job)} 
+                                                            className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold transition-colors"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <a 
+                                                            href={job.link} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer" 
+                                                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors inline-flex items-center"
+                                                        >
+                                                            Link Asli
+                                                        </a>
+                                                        <button 
+                                                            onClick={() => handleDeleteJob(job.id)} 
+                                                            className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-semibold transition-colors"
+                                                        >
+                                                            Hapus
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
@@ -437,57 +431,14 @@ export default function LokerAdminPage() {
                         </table>
                     </div>
                     {/* Pagination */}
-                    <div className="flex justify-between items-center mt-4">
-                        <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0 || loading} className="px-3 py-1 bg-gray-200 rounded-lg text-sm disabled:opacity-50">
+                    <div className="flex justify-between items-center px-5 py-4 border-t border-gray-100">
+                        <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0 || loading} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors">
                             &larr; Prev
                         </button>
                         <span className="text-sm text-gray-600">Hal {page + 1} dari {totalPages || 1}</span>
-                        <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1 || loading || totalPages === 0} className="px-3 py-1 bg-gray-200 rounded-lg text-sm disabled:opacity-50">
+                        <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1 || loading || totalPages === 0} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors">
                             Next &rarr;
                         </button>
-                    </div>
-                </div>
-
-                {/* Lamaran Section */}
-                <div className="lg:col-span-1">
-                    <h2 className="text-xl font-bold text-gray-800 mb-4">Lamaran Masuk</h2>
-                    <div className="bg-white shadow-sm border border-gray-100 rounded-xl p-4">
-                        {applications.length === 0 ? (
-                            <p className="text-gray-500 text-sm text-center py-4">Belum ada mahasiswa yang melamar.</p>
-                        ) : (
-                            <div className="space-y-4">
-                                {applications.map(app => (
-                                    <div key={app.id} className="border-b border-gray-50 pb-3 last:border-0 last:pb-0">
-                                        <div className="flex justify-between items-start mb-1">
-                                            <div className="text-sm font-bold text-gray-900 line-clamp-1" title={app.job_vacancies?.title}>
-                                                {app.job_vacancies?.title}
-                                            </div>
-                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${app.status === 'Terkirim' ? 'bg-yellow-100 text-yellow-800' : app.status === 'Diproses' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
-                                                {app.status}
-                                            </span>
-                                        </div>
-                                        <div className="text-xs text-gray-500 mb-2">
-                                            {app.job_vacancies?.company} • {app.user_email}
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <a href={app.cv_url} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded hover:bg-slate-200 transition-colors">
-                                                Lihat CV
-                                            </a>
-                                            <select 
-                                                value={app.status}
-                                                onChange={(e) => handleUpdateApplicationStatus(app.id, e.target.value)}
-                                                className="text-[10px] border border-gray-200 rounded px-1 text-gray-700 bg-white"
-                                            >
-                                                <option value="Terkirim">Terkirim</option>
-                                                <option value="Diproses">Diproses</option>
-                                                <option value="Diterima">Diterima</option>
-                                                <option value="Ditolak">Ditolak</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
