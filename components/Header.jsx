@@ -53,7 +53,7 @@ const Header = () => {
     },
     { href: "/lecturer", label: "Pengajaran" },
     { href: "/blog", label: "Tulisan" },
-    { href: "/loker", label: "Loker IT" },
+    { href: "/loker", label: "Loker" },
     {
       label: "Aplikasi",
       submenu: [
