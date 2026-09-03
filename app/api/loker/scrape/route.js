@@ -318,7 +318,7 @@ async function runScrape(req) {
 
         // 4. Fetch dari Lokernas (Loker Dalam Negeri / BUMN, CPNS, Swasta Indonesia)
         try {
-            const lokernasRes = await fetch("https://www.lokernas.com/feeds/posts/default?alt=rss&max-results=25", {
+            const lokernasRes = await fetch("https://www.lokernas.com/feeds/posts/default?alt=rss&max-results=35", {
                 signal: AbortSignal.timeout(15000),
                 headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }
             });
@@ -326,16 +326,12 @@ async function runScrape(req) {
                 const xml = await lokernasRes.text();
                 const $ = cheerio.load(xml, { xmlMode: true });
                 const entries = $("entry, item");
-                // Filter lowongan yang relevan untuk mahasiswa/calon pekerja IT (strict + umum)
-                const strictIt = /developer|engineer|programmer|data scientist|data engineer|data analyst|software|frontend|backend|fullstack|devops|cloud|cyber|network engineer|security|mobile|ui\/ux|qa tester|analyst|sistem informasi|informatika|komputer|staff ti|teknisi|it |web|it$/i;
-                const looseIt = /digital|teknologi|telekomunikasi|startup|e-commerce|fintech|bank|perbankan|bumn|cpns|pppk|kementerian|lembaga|rsud|rumah sakit|universitas|dosen|guru|pt .* (indonesia|tbk)|lowongan kerja (staff|admin|magang|internship)/i;
-                const isItRelated = (t) => strictIt.test(t) || looseIt.test(t);
 
                 const lokernasJobs = [];
                 entries.each((_, el) => {
                     const $el = $(el);
                     const title = $el.find("title").first().text().trim();
-                    if (!title || !isItRelated(title)) return;
+                    if (!title) return;
 
                     const rawContent = $el.find("content, description").first().text();
                     const cleanedDesc = cleanHtmlDescription(rawContent);
@@ -355,7 +351,7 @@ async function runScrape(req) {
                         description: cleanedDesc
                     });
                 });
-                newJobs = [...newJobs, ...lokernasJobs.slice(0, 15)];
+                newJobs = [...newJobs, ...lokernasJobs.slice(0, 25)];
             } else {
                 sourceErrors.push(`Lokernas status: ${lokernasRes.status}`);
             }
@@ -367,7 +363,7 @@ async function runScrape(req) {
         // 5. Fetch dari Karirhub Kemnaker (Loker Dalam Negeri — API Resmi Kementerian Ketenagakerjaan RI)
         try {
             const khHeaders = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" };
-            // Ambil 2 halaman pertama (50 lowongan/halaman) untuk memperbanyak kandidat lowongan IT
+            // Ambil halaman lowongan untuk mencakup berbagai sektor pekerjaan (IT, Administrasi, Teknik, Keuangan, Marketing, dll.)
             const khPageUrls = [
                 "https://api.kemnaker.go.id/karirhub/vacancy/v2/published-industrial-vacancies?page=1&limit=50",
                 "https://api.kemnaker.go.id/karirhub/vacancy/v2/published-industrial-vacancies?page=2&limit=50"
@@ -391,52 +387,51 @@ async function runScrape(req) {
             }
 
             if (khItems.length > 0) {
-                // Filter lowongan IT yang relevan (judul/industri/fungsi/job type)
-                const itKeywords = /developer|engineer|programmer|data scientist|data engineer|data analyst|software|frontend|backend|fullstack|devops|cloud|cyber|network|security|mobile|ui\/ux|qa tester|qa |analyst|sistem informasi|informatika|komputer|staff it|teknisi|it support|web developer|it$/i;
-                const karirhubJobs = [];
-                for (const item of khItems) {
-                    const title = (item.title || "").trim();
-                    if (!title || !itKeywords.test(title)) continue;
+                // Ambil lowongan multi-bidang dari Karirhub (mencakup semua bidang pekerjaan)
+                const selectedItems = khItems
+                    .filter(item => (item.title || "").trim().length > 0)
+                    .slice(0, 25);
 
-                    // Ambil detail untuk deskripsi lengkap (deskripsi + kualifikasi) dan lokasi
-                    let description = "";
-                    try {
-                        const detailRes = await fetch(`https://api.kemnaker.go.id/karirhub/vacancy/v2/published-industrial-vacancies/${item.id}`, {
-                            signal: AbortSignal.timeout(10000),
-                            headers: khHeaders
-                        });
-                        if (detailRes.ok) {
-                            const detailData = await detailRes.json();
-                            const detail = detailData.data || {};
-                            const descHtml = detail.description || "";
-                            const qualHtml = detail.qualification ? `<p><b>Kualifikasi:</b></p>${detail.qualification}` : "";
-                            description = cleanHtmlDescription(`${descHtml}${qualHtml}`);
-                            // Lokasi dari objek region detail (mis. "Kota Adm. Jakarta Selatan, DKI Jakarta")
-                            if (detail.region && detail.region.name) {
-                                item._location = detail.region.name;
+                const karirhubJobs = await Promise.all(
+                    selectedItems.map(async (item) => {
+                        const title = (item.title || "").trim();
+                        let description = "";
+                        let location = item.city_name || "Indonesia";
+
+                        try {
+                            const detailRes = await fetch(`https://api.kemnaker.go.id/karirhub/vacancy/v2/published-industrial-vacancies/${item.id}`, {
+                                signal: AbortSignal.timeout(8000),
+                                headers: khHeaders
+                            });
+                            if (detailRes.ok) {
+                                const detailData = await detailRes.json();
+                                const detail = detailData.data || {};
+                                const descHtml = detail.description || "";
+                                const qualHtml = detail.qualification ? `<p><b>Kualifikasi:</b></p>${detail.qualification}` : "";
+                                description = cleanHtmlDescription(`${descHtml}${qualHtml}`);
+                                if (detail.region && detail.region.name) {
+                                    location = detail.region.name;
+                                }
                             }
+                        } catch (e) {
+                            // Non-fatal fallback
                         }
-                    } catch (e) {
-                        console.error(`Error fetching Karirhub detail ${item.id}:`, e.message);
-                    }
 
-                    // Konversi lokasi (array "city:<uuid>") — biarkan default "Indonesia" jika tidak bisa di-resolve
-                    const location = item._location || item.city_name || "Indonesia";
+                        const link = item.platform_link || `https://karirhub.kemnaker.go.id/lowongan/${item.id}`;
 
-                    // Link asli lowongan (mis. Kalibrr, Toploker) atau fallback detail Karirhub
-                    const link = item.platform_link || `https://karirhub.kemnaker.go.id/lowongan/${item.id}`;
+                        return {
+                            title: cleanJobTitle(title),
+                            company: item.company_name || "",
+                            location,
+                            type: item.job_type_name || "Full-time",
+                            link,
+                            source: "Karirhub Kemnaker (Dalam Negeri)",
+                            description
+                        };
+                    })
+                );
 
-                    karirhubJobs.push({
-                        title: cleanJobTitle(title),
-                        company: item.company_name || "",
-                        location,
-                        type: item.job_type_name || "Full-time",
-                        link,
-                        source: "Karirhub Kemnaker (Dalam Negeri)",
-                        description
-                    });
-                }
-                newJobs = [...newJobs, ...karirhubJobs.slice(0, 15)];
+                newJobs = [...newJobs, ...karirhubJobs];
             }
         } catch (e) {
             console.error("Error fetching Karirhub:", e.message);

@@ -94,13 +94,14 @@ export function getLocationScope(job) {
 
 // Helper function to detect Job Category
 export function getJobCategory(job) {
-    if (!job) return { id: "general-it", name: "IT & Lainnya", icon: "🛠️", color: "bg-slate-50 text-slate-700 border-slate-200" };
+    if (!job) return { id: "general", name: "Umum & Lainnya", icon: "🛠️", color: "bg-slate-50 text-slate-700 border-slate-200" };
     
     const title = (job.title || "").toLowerCase();
-    const desc = (job.description || "").toLowerCase().slice(0, 500);
+    const desc = (job.description || "").toLowerCase().slice(0, 600);
     const combined = `${title} ${desc}`;
     
-    if (/ai|artificial intelligence|machine learning|genai|llm|deep learning|data scientist|data engineer|data analyst|nlp|computer vision|big data|business intelligence|bi analyst/.test(combined)) {
+    // 1. AI & Data
+    if (/\b(ai|artificial intelligence|machine learning|genai|llm|deep learning|data scientist|data engineer|data analyst|nlp|computer vision|big data|business intelligence|bi analyst)\b/i.test(combined)) {
         return {
             id: "ai-data",
             name: "AI & Data",
@@ -109,7 +110,8 @@ export function getJobCategory(job) {
         };
     }
     
-    if (/devops|cloud|aws|gcp|azure|kubernetes|docker|sre|site reliability|cyber|security|infrastructure|sysadmin|system administrator|network/.test(combined)) {
+    // 2. Cloud, DevOps & Network
+    if (/\b(devops|cloud|aws|gcp|azure|kubernetes|docker|sre|site reliability|cyber|security|infrastructure|sysadmin|system administrator|network engineer)\b/i.test(combined)) {
         return {
             id: "cloud-devops",
             name: "Cloud & DevOps",
@@ -118,7 +120,8 @@ export function getJobCategory(job) {
         };
     }
     
-    if (/mobile|android|ios|flutter|react native|swift|kotlin/.test(combined)) {
+    // 3. Mobile Development
+    if (/\b(mobile|android|ios|flutter|react native|swift|kotlin)\b/i.test(combined)) {
         return {
             id: "mobile",
             name: "Mobile Dev",
@@ -126,26 +129,99 @@ export function getJobCategory(job) {
             color: "bg-pink-50 text-pink-700 border-pink-200"
         };
     }
-    
-    if (/ui|ux|user experience|user interface|product designer|graphic designer|figma|web designer/.test(combined)) {
+
+    // 4. Software & Web Development
+    if (/\b(developer|programmer|frontend|backend|full stack|fullstack|software|web dev|react|next\.?js|node\.?js|golang|laravel|vue|angular|typescript|javascript|sistem informasi|informatika|it support|teknisi komputer)\b/i.test(combined) || /\b(php|python|java|c\+\+|c#|\.net)\b/i.test(title)) {
+        return {
+            id: "software-web",
+            name: "Software & Web",
+            icon: "💻",
+            color: "bg-blue-50 text-blue-700 border-blue-200"
+        };
+    }
+
+    // 5. Keuangan, Akuntansi & Perbankan
+    if (/\b(akuntan|akuntansi|accounting|keuangan|finance|pajak|tax|auditor|audit|teller|kasir|cashier|perbankan|bank|credit analyst|penagihan|collection)\b/i.test(combined)) {
+        return {
+            id: "finance-accounting",
+            name: "Keuangan & Akuntansi",
+            icon: "💰",
+            color: "bg-emerald-50 text-emerald-700 border-emerald-200"
+        };
+    }
+
+    // 6. Sales, Pemasaran & Bisnis
+    if (/\b(sales|marketing|pemasaran|account executive|business development|telemarketing|promoter|penjualan|canvasser|merchandiser|spg|spb|brand ambassador)\b/i.test(combined)) {
+        return {
+            id: "sales-marketing",
+            name: "Sales & Marketing",
+            icon: "📈",
+            color: "bg-rose-50 text-rose-700 border-rose-200"
+        };
+    }
+
+    // 7. Administrasi, Perkantoran & Customer Service
+    if (/\b(administrasi|admin|sekretaris|data entry|resepsionis|receptionist|back office|clerk|arsip|customer service|call center|front office|tata usaha|operasional|clerical)\b/i.test(combined)) {
+        return {
+            id: "admin-office",
+            name: "Administrasi & Office",
+            icon: "📁",
+            color: "bg-orange-50 text-orange-700 border-orange-200"
+        };
+    }
+
+    // 8. Kesehatan & Pendidikan
+    if (/\b(dokter|perawat|bidan|apoteker|farmasi|tenaga medis|kesehatan|radiologi|fisioterapi|guru|dosen|tutor|pengajar|konselor|laboratorium|analis kesehatan)\b/i.test(combined)) {
+        return {
+            id: "health-education",
+            name: "Kesehatan & Pendidikan",
+            icon: "🏥",
+            color: "bg-cyan-50 text-cyan-700 border-cyan-200"
+        };
+    }
+
+    // 9. Desain & Kreatif
+    if (/\b(ui|ux|user experience|user interface|product designer|graphic designer|figma|web designer|desain grafis|video editor|animator|creative|konten kreator|content creator|illustrator|copywriter|desainer)\b/i.test(combined)) {
         return {
             id: "ui-ux",
-            name: "UI/UX & Design",
+            name: "Desain & Kreatif",
             icon: "🎨",
             color: "bg-amber-50 text-amber-700 border-amber-200"
         };
     }
-    
-    if (/product manager|project manager|scrum master|tech lead|engineering manager|agile coach/.test(combined)) {
+
+    // 10. HR, Personalia & Legal
+    if (/\b(hrd|human resources?|personalia|recruitment|rekruter|talent acquisition|general affair|legal|hukum|advokat|industrial relation)\b/i.test(combined)) {
+        return {
+            id: "hr-legal",
+            name: "HR & Legal",
+            icon: "👥",
+            color: "bg-violet-50 text-violet-700 border-violet-200"
+        };
+    }
+
+    // 11. Teknik, Manufaktur & Logistik
+    if (/\b(teknik sipil|teknik mesin|teknik elektro|mekanik|operator|manufaktur|maintenance|logistik|gudang|warehouse|drafter|quality control|qc inspector|kurir|driver|pengemudi|teknisi)\b/i.test(combined)) {
+        return {
+            id: "engineering-teknik",
+            name: "Teknik & Operasional",
+            icon: "⚙️",
+            color: "bg-stone-50 text-stone-700 border-stone-200"
+        };
+    }
+
+    // 12. Manajemen & Proyek
+    if (/\b(product manager|project manager|scrum master|tech lead|engineering manager|supervisor|branch manager|kepala cabang|koordinator|manager)\b/i.test(combined)) {
         return {
             id: "management",
-            name: "Product & Project",
+            name: "Manajemen & Proyek",
             icon: "📊",
             color: "bg-indigo-50 text-indigo-700 border-indigo-200"
         };
     }
-    
-    if (/qa|quality assurance|tester|automation tester|sdet|test engineer/.test(combined)) {
+
+    // 13. QA & Testing
+    if (/\b(qa|quality assurance|tester|automation tester|sdet|test engineer)\b/i.test(combined)) {
         return {
             id: "qa",
             name: "QA & Testing",
@@ -154,33 +230,30 @@ export function getJobCategory(job) {
         };
     }
     
-    if (/developer|engineer|programmer|frontend|backend|full stack|fullstack|software|web|react|next|node|java|python|golang|go|rust|c\+\+|c#|\.net|php|laravel|vue|angular|typescript|javascript/.test(combined)) {
-        return {
-            id: "software-web",
-            name: "Software & Web",
-            icon: "💻",
-            color: "bg-blue-50 text-blue-700 border-blue-200"
-        };
-    }
-    
     return {
-        id: "general-it",
-        name: "IT & Lainnya",
+        id: "general",
+        name: "Umum & Lainnya",
         icon: "🛠️",
         color: "bg-slate-50 text-slate-700 border-slate-200"
     };
 }
 
-const CATEGORIES = [
+export const CATEGORIES = [
     { id: "all", name: "Semua Kategori", icon: "✨" },
     { id: "software-web", name: "Software & Web", icon: "💻" },
+    { id: "admin-office", name: "Administrasi & Office", icon: "📁" },
+    { id: "sales-marketing", name: "Sales & Marketing", icon: "📈" },
+    { id: "finance-accounting", name: "Keuangan & Akuntansi", icon: "💰" },
+    { id: "engineering-teknik", name: "Teknik & Operasional", icon: "⚙️" },
+    { id: "health-education", name: "Kesehatan & Pendidikan", icon: "🏥" },
     { id: "ai-data", name: "AI & Data", icon: "🤖" },
     { id: "cloud-devops", name: "Cloud & DevOps", icon: "☁️" },
     { id: "mobile", name: "Mobile Dev", icon: "📱" },
-    { id: "ui-ux", name: "UI/UX & Design", icon: "🎨" },
-    { id: "management", name: "Product & Project", icon: "📊" },
+    { id: "ui-ux", name: "Desain & Kreatif", icon: "🎨" },
+    { id: "hr-legal", name: "HR & Legal", icon: "👥" },
+    { id: "management", name: "Manajemen & Proyek", icon: "📊" },
     { id: "qa", name: "QA & Testing", icon: "🔍" },
-    { id: "general-it", name: "IT & Lainnya", icon: "🛠️" },
+    { id: "general", name: "Umum & Lainnya", icon: "🛠️" },
 ];
 
 export default function LokerPublicPage() {
@@ -339,11 +412,11 @@ export default function LokerPublicPage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 opacity-95 z-10"></div>
                 <div className="relative z-20 flex flex-col items-center justify-center h-full text-white px-4 text-center">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold mb-3">
-                        <span>💼 Portal Karir & Lowongan Kerja IT</span>
+                        <span>💼 Portal Karir & Lowongan Kerja</span>
                     </div>
                     <h1 className="text-3xl md:text-5xl font-extrabold mb-3">Peluang Karir Dalam & Luar Negeri</h1>
                     <p className="text-xs md:text-sm text-indigo-200 max-w-2xl">
-                        Temukan lowongan kerja IT terkurasi dari Indonesia maupun internasional, lengkap dengan terjemahan bahasa Indonesia untuk lowongan luar negeri.
+                        Temukan lowongan kerja terkurasi dari berbagai bidang di Indonesia (BUMN, Perbankan, Swasta, Administrasi, Teknik, dll.) maupun internasional & remote.
                     </p>
                 </div>
             </div>
@@ -360,7 +433,7 @@ export default function LokerPublicPage() {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Cari lowongan, posisi, perusahaan, atau teknologi (contoh: React, Backend, AI, Jakarta)..."
+                            placeholder="Cari lowongan, posisi, perusahaan, atau bidang (contoh: Administrasi, Akuntansi, Developer, BUMN, Jakarta)..."
                             className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                         />
                         {searchQuery && (
