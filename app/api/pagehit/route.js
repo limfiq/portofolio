@@ -1,45 +1,11 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
+import fs from "fs";
+import path from "path";
 
 export const dynamic = "force-dynamic";
 
-const COUNTRY_MAP = {
-  ID: "Indonesia",
-  US: "United States",
-  SG: "Singapura",
-  MY: "Malaysia",
-  JP: "Jepang",
-  GB: "United Kingdom",
-  AU: "Australia",
-  DE: "Jerman",
-  NL: "Belanda",
-  FR: "Prancis",
-  KR: "Korea Selatan",
-  IN: "India",
-  CA: "Kanada",
-  BR: "Brasil",
-  SA: "Arab Saudi",
-  AE: "Uni Emirat Arab",
-  TR: "Turki",
-  RU: "Rusia",
-  TH: "Thailand",
-  VN: "Vietnam",
-  PH: "Filipina",
-  CN: "Tiongkok",
-  HK: "Hong Kong",
-  TW: "Taiwan"
-};
-
-const DEFAULT_COUNTRY_SEED = [
-  { code: "ID", views: 980 },
-  { code: "US", views: 145 },
-  { code: "SG", views: 72 },
-  { code: "MY", views: 54 },
-  { code: "JP", views: 36 },
-  { code: "AU", views: 22 },
-  { code: "GB", views: 18 },
-  { code: "DE", views: 12 }
-];
+const LOCAL_DATA_PATH = path.join(process.cwd(), "data", "visitor_countries.json");
 
 function getFlagEmoji(countryCode) {
   if (!countryCode || countryCode.length !== 2) return "🌐";
@@ -54,6 +20,16 @@ function getFlagEmoji(countryCode) {
   }
 }
 
+function getCountryName(code) {
+  if (!code) return "Unknown";
+  try {
+    const regionNames = new Intl.DisplayNames(["id"], { type: "region" });
+    return regionNames.of(code.toUpperCase()) || code;
+  } catch (_) {
+    return code;
+  }
+}
+
 function detectCountryFromRequest(request) {
   const headerCountry =
     request.headers.get("x-vercel-ip-country") ||
@@ -64,47 +40,133 @@ function detectCountryFromRequest(request) {
   if (headerCountry && headerCountry !== "XX" && headerCountry.length === 2) {
     return headerCountry.toUpperCase();
   }
-  return "ID"; // Default fallback
+  return "ID";
 }
 
-function processCountryStats(allViews) {
-  // Extract all rows starting with "country:"
-  const countryRows = allViews.filter((item) =>
-    item.page_name?.toLowerCase().startsWith("country:")
-  );
+// Local file persistence helpers
+function readLocalCountryData() {
+  try {
+    if (fs.existsSync(LOCAL_DATA_PATH)) {
+      const content = fs.readFileSync(LOCAL_DATA_PATH, "utf-8");
+      return JSON.parse(content);
+    }
+  } catch (e) {
+    console.warn("Failed to read local country data:", e.message);
+  }
+  return [];
+}
 
-  let rawList = [];
+function saveLocalCountryVisit(countryCode, countryName, flagEmoji) {
+  try {
+    const list = readLocalCountryData();
+    const existing = list.find((c) => c.code.toUpperCase() === countryCode.toUpperCase());
+    const now = new Date().toISOString();
 
-  if (countryRows.length > 0) {
-    rawList = countryRows.map((r) => {
-      const code = r.page_name.split(":")[1]?.toUpperCase() || "XX";
-      return {
-        code,
-        name: COUNTRY_MAP[code] || code,
-        flag: getFlagEmoji(code),
-        views: Number(r.view_count) || 0
-      };
-    });
-  } else {
-    // Fallback if country rows haven't been seeded
-    rawList = DEFAULT_COUNTRY_SEED.map((s) => ({
-      code: s.code,
-      name: COUNTRY_MAP[s.code] || s.code,
-      flag: getFlagEmoji(s.code),
-      views: s.views
+    if (existing) {
+      existing.views = (existing.views || 0) + 1;
+      existing.last_visited = now;
+      if (!existing.flag) existing.flag = flagEmoji;
+      if (!existing.name) existing.name = countryName;
+    } else {
+      list.push({
+        code: countryCode.toUpperCase(),
+        name: countryName,
+        flag: flagEmoji,
+        views: 1,
+        first_visited: now,
+        last_visited: now
+      });
+    }
+
+    const dir = path.dirname(LOCAL_DATA_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(LOCAL_DATA_PATH, JSON.stringify(list, null, 2), "utf-8");
+    return list;
+  } catch (e) {
+    console.warn("Failed to save local country visit:", e.message);
+  }
+  return [];
+}
+
+// Fetch saved countries from Supabase or local fallback
+async function getSavedCountries(supabase) {
+  try {
+    // 1. Try dedicated visitor_countries table in Supabase
+    const { data: dbData, error: dbError } = await supabase
+      .from("visitor_countries")
+      .select("*")
+      .order("view_count", { ascending: false });
+
+    if (!dbError && dbData && dbData.length > 0) {
+      const totalViews = dbData.reduce((acc, curr) => acc + (Number(curr.view_count) || 0), 0) || 1;
+      return dbData.map((c) => ({
+        code: c.country_code,
+        name: c.country_name || getCountryName(c.country_code),
+        flag: c.flag_emoji || getFlagEmoji(c.country_code),
+        views: Number(c.view_count) || 0,
+        lastVisited: c.last_visited,
+        percentage: Math.round(((Number(c.view_count) || 0) / totalViews) * 1000) / 10
+      }));
+    }
+  } catch (_) {}
+
+  try {
+    // 2. Try page_views table for rows starting with "country:"
+    const { data: pvData, error: pvError } = await supabase
+      .from("page_views")
+      .select("page_name, view_count, last_updated");
+
+    if (!pvError && pvData) {
+      const countryRows = pvData.filter((r) =>
+        r.page_name?.toLowerCase().startsWith("country:")
+      );
+
+      if (countryRows.length > 0) {
+        const totalViews = countryRows.reduce((acc, curr) => acc + (Number(curr.view_count) || 0), 0) || 1;
+        const list = countryRows.map((r) => {
+          const code = r.page_name.split(":")[1]?.toUpperCase() || "XX";
+          return {
+            code,
+            name: getCountryName(code),
+            flag: getFlagEmoji(code),
+            views: Number(r.view_count) || 0,
+            lastVisited: r.last_updated,
+            percentage: Math.round(((Number(r.view_count) || 0) / totalViews) * 1000) / 10
+          };
+        });
+        list.sort((a, b) => b.views - a.views);
+        return list;
+      }
+    }
+  } catch (_) {}
+
+  // 3. Fallback to local persisted file data
+  const localList = readLocalCountryData();
+  if (localList.length > 0) {
+    localList.sort((a, b) => (b.views || 0) - (a.views || 0));
+    const totalViews = localList.reduce((acc, curr) => acc + (Number(curr.views) || 0), 0) || 1;
+    return localList.map((c) => ({
+      code: c.code,
+      name: c.name || getCountryName(c.code),
+      flag: c.flag || getFlagEmoji(c.code),
+      views: Number(c.views) || 0,
+      lastVisited: c.last_visited,
+      percentage: Math.round(((Number(c.views) || 0) / totalViews) * 1000) / 10
     }));
   }
 
-  // Sort descending by views
-  rawList.sort((a, b) => b.views - a.views);
-
-  const totalCountryViews = rawList.reduce((acc, curr) => acc + curr.views, 0) || 1;
-  const countries = rawList.map((item) => ({
-    ...item,
-    percentage: Math.round((item.views / totalCountryViews) * 1000) / 10
-  }));
-
-  return { countries, totalCountryViews };
+  // Initial default if empty
+  return [
+    {
+      code: "ID",
+      name: "Indonesia",
+      flag: "🇮🇩",
+      views: 120,
+      percentage: 100
+    }
+  ];
 }
 
 export async function GET(request) {
@@ -114,56 +176,49 @@ export async function GET(request) {
     const pageName = searchParams.get("page") || "Home";
     const visitorCountry = detectCountryFromRequest(request);
 
-    const { data, error } = await supabase
-      .from("page_views")
-      .select("page_name, view_count");
+    const savedCountries = await getSavedCountries(supabase);
+    const totalHits = savedCountries.reduce((acc, curr) => acc + curr.views, 0);
 
-    if (error) {
-      console.warn("Error fetching page_views:", error.message);
-      const { countries } = processCountryStats([]);
-      return NextResponse.json({
-        totalHits: 1339,
-        pageHits: 120,
-        pageName,
-        visitorCountry,
-        visitorFlag: getFlagEmoji(visitorCountry),
-        visitorCountryName: COUNTRY_MAP[visitorCountry] || visitorCountry,
-        countries,
-        fallback: true
-      });
-    }
-
-    const allViews = data || [];
-    const { countries, totalCountryViews } = processCountryStats(allViews);
-
-    // Page view for the specific page
-    const currentPageRow = allViews.find(
-      (item) => item.page_name?.toLowerCase() === pageName.toLowerCase()
-    );
-    const pageHits = currentPageRow ? Number(currentPageRow.view_count) || 0 : 0;
+    // Fetch views for this particular page
+    let pageHits = 1;
+    try {
+      const { data: pageRow } = await supabase
+        .from("page_views")
+        .select("view_count")
+        .eq("page_name", pageName)
+        .maybeSingle();
+      if (pageRow) {
+        pageHits = Number(pageRow.view_count) || 1;
+      }
+    } catch (_) {}
 
     return NextResponse.json({
-      totalHits: totalCountryViews,
+      totalHits: Math.max(totalHits, 1),
       pageHits: Math.max(pageHits, 1),
       pageName,
       visitorCountry,
       visitorFlag: getFlagEmoji(visitorCountry),
-      visitorCountryName: COUNTRY_MAP[visitorCountry] || visitorCountry,
-      countries,
-      fallback: false
+      visitorCountryName: getCountryName(visitorCountry),
+      countries: savedCountries
     });
   } catch (err) {
-    console.error("Page hit GET error:", err);
-    const { countries } = processCountryStats([]);
+    console.error("GET pagehit error:", err);
     return NextResponse.json({
-      totalHits: 1339,
-      pageHits: 120,
+      totalHits: 120,
+      pageHits: 1,
       pageName: "Home",
       visitorCountry: "ID",
       visitorFlag: "🇮🇩",
       visitorCountryName: "Indonesia",
-      countries,
-      fallback: true
+      countries: [
+        {
+          code: "ID",
+          name: "Indonesia",
+          flag: "🇮🇩",
+          views: 120,
+          percentage: 100
+        }
+      ]
     });
   }
 }
@@ -177,91 +232,121 @@ export async function POST(request) {
     } catch (_) {}
 
     const pageName = body.pageName || "Home";
-    const visitorCountry = body.countryCode || detectCountryFromRequest(request);
-    const countryKey = `country:${visitorCountry.toUpperCase()}`;
+    const countryCode = (body.countryCode || detectCountryFromRequest(request)).toUpperCase();
+    const countryName = getCountryName(countryCode);
+    const flagEmoji = getFlagEmoji(countryCode);
+    const now = new Date().toISOString();
 
-    // 1. Increment current page
-    const { data: existingPage } = await supabase
-      .from("page_views")
-      .select("view_count")
-      .eq("page_name", pageName)
-      .maybeSingle();
+    // 1. Persist to local file storage (ensures immediate persistence)
+    saveLocalCountryVisit(countryCode, countryName, flagEmoji);
 
-    if (!existingPage) {
-      await supabase.from("page_views").insert({
-        page_name: pageName,
-        view_count: 1,
-        last_updated: new Date().toISOString()
-      });
-    } else {
-      await supabase
-        .from("page_views")
-        .update({
-          view_count: (Number(existingPage.view_count) || 0) + 1,
-          last_updated: new Date().toISOString()
-        })
-        .eq("page_name", pageName);
+    // 2. Persist to Supabase visitor_countries table
+    try {
+      const { data: existingCountry } = await supabase
+        .from("visitor_countries")
+        .select("country_code, view_count")
+        .eq("country_code", countryCode)
+        .maybeSingle();
+
+      if (!existingCountry) {
+        await supabase.from("visitor_countries").insert({
+          country_code: countryCode,
+          country_name: countryName,
+          flag_emoji: flagEmoji,
+          view_count: 1,
+          first_visited: now,
+          last_visited: now
+        });
+      } else {
+        await supabase
+          .from("visitor_countries")
+          .update({
+            view_count: (Number(existingCountry.view_count) || 0) + 1,
+            last_visited: now
+          })
+          .eq("country_code", countryCode);
+      }
+    } catch (e) {
+      console.warn("visitor_countries table insert/update failed:", e.message);
     }
 
-    // 2. Increment visitor's country
-    const { data: existingCountry } = await supabase
-      .from("page_views")
-      .select("view_count")
-      .eq("page_name", countryKey)
-      .maybeSingle();
-
-    if (!existingCountry) {
-      await supabase.from("page_views").insert({
-        page_name: countryKey,
-        view_count: 1,
-        last_updated: new Date().toISOString()
-      });
-    } else {
-      await supabase
+    // 3. Persist to Supabase page_views (both country key and page name)
+    try {
+      // Country key in page_views
+      const countryKey = `country:${countryCode}`;
+      const { data: existingPVCountry } = await supabase
         .from("page_views")
-        .update({
-          view_count: (Number(existingCountry.view_count) || 0) + 1,
-          last_updated: new Date().toISOString()
-        })
-        .eq("page_name", countryKey);
+        .select("view_count")
+        .eq("page_name", countryKey)
+        .maybeSingle();
+
+      if (!existingPVCountry) {
+        await supabase.from("page_views").insert({
+          page_name: countryKey,
+          view_count: 1,
+          last_updated: now
+        });
+      } else {
+        await supabase
+          .from("page_views")
+          .update({
+            view_count: (Number(existingPVCountry.view_count) || 0) + 1,
+            last_updated: now
+          })
+          .eq("page_name", countryKey);
+      }
+
+      // Page name in page_views
+      const { data: existingPage } = await supabase
+        .from("page_views")
+        .select("view_count")
+        .eq("page_name", pageName)
+        .maybeSingle();
+
+      if (!existingPage) {
+        await supabase.from("page_views").insert({
+          page_name: pageName,
+          view_count: 1,
+          last_updated: now
+        });
+      } else {
+        await supabase
+          .from("page_views")
+          .update({
+            view_count: (Number(existingPage.view_count) || 0) + 1,
+            last_updated: now
+          })
+          .eq("page_name", pageName);
+      }
+    } catch (e) {
+      console.warn("page_views table update failed:", e.message);
     }
 
-    // 3. Fetch updated data
-    const { data: allData } = await supabase
-      .from("page_views")
-      .select("page_name, view_count");
-
-    const allViews = allData || [];
-    const { countries, totalCountryViews } = processCountryStats(allViews);
-
-    const currentPageRow = allViews.find(
-      (item) => item.page_name?.toLowerCase() === pageName.toLowerCase()
-    );
-    const pageHits = currentPageRow ? Number(currentPageRow.view_count) || 0 : 1;
+    // 4. Return updated saved countries list
+    const updatedCountries = await getSavedCountries(supabase);
+    const totalHits = updatedCountries.reduce((acc, curr) => acc + curr.views, 0);
 
     return NextResponse.json({
       success: true,
-      totalHits: totalCountryViews,
-      pageHits: Math.max(pageHits, 1),
+      totalHits: Math.max(totalHits, 1),
+      pageHits: 1,
       pageName,
-      visitorCountry,
-      visitorFlag: getFlagEmoji(visitorCountry),
-      visitorCountryName: COUNTRY_MAP[visitorCountry] || visitorCountry,
-      countries
+      visitorCountry: countryCode,
+      visitorFlag: flagEmoji,
+      visitorCountryName: countryName,
+      countries: updatedCountries
     });
   } catch (err) {
-    console.error("Page hit POST error:", err);
-    const { countries } = processCountryStats([]);
+    console.error("POST pagehit error:", err);
     return NextResponse.json({
       success: false,
-      totalHits: 1339,
-      pageHits: 120,
+      totalHits: 120,
+      pageHits: 1,
       pageName: "Home",
       visitorCountry: "ID",
       visitorFlag: "🇮🇩",
       visitorCountryName: "Indonesia",
-      countries,
-      fallback: true
+      countries: readLocalCountryData()
     });
   }
 }

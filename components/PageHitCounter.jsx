@@ -44,6 +44,27 @@ function detectClientCountry() {
   return "ID";
 }
 
+// Resolve country via IP lookup with timezone fallback
+async function resolveVisitorCountry() {
+  if (typeof window === "undefined") return "ID";
+  try {
+    const cached = sessionStorage.getItem("visitor_country");
+    if (cached && cached.length === 2) return cached;
+
+    const res = await fetch("https://api.country.is/", {
+      signal: AbortSignal.timeout(1800)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.country && data.country.length === 2) {
+        sessionStorage.setItem("visitor_country", data.country);
+        return data.country;
+      }
+    }
+  } catch (_) {}
+  return detectClientCountry();
+}
+
 export default function PageHitCounter() {
   const pathname = usePathname();
   const [stats, setStats] = useState({
@@ -68,11 +89,11 @@ export default function PageHitCounter() {
       try {
         const sessionKey = `visited_${pageName}`;
         const hasVisited = typeof window !== "undefined" && sessionStorage.getItem(sessionKey);
-        const localCountry = detectClientCountry();
+        const localCountry = await resolveVisitorCountry();
 
         let res;
         if (!hasVisited) {
-          // Record hit (POST) with country code
+          // Record hit (POST) with country code - saves to database
           res = await fetch("/api/pagehit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -233,45 +254,62 @@ export default function PageHitCounter() {
             </div>
           </div>
 
+          {/* Country List Header */}
+          <div className="px-3.5 pt-3 pb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <span>Negara yang Pernah Berkunjung ({stats.countries.length})</span>
+            <span>Hits • Proporsi</span>
+          </div>
+
           {/* Country Leaderboard List */}
           <div className="p-3 overflow-y-auto max-h-64 space-y-2 divide-y divide-slate-100 dark:divide-slate-800/60">
-            {stats.countries.map((item, idx) => (
-              <div key={item.code} className="pt-2 first:pt-0">
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className={`w-4 text-[10px] font-bold ${idx === 0 ? "text-amber-500" : "text-slate-400"}`}>
-                      {idx === 0 ? "🥇" : `#${idx + 1}`}
-                    </span>
-                    <span className="text-base leading-none">{item.flag}</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
-                      {item.name}
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-mono">({item.code})</span>
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-shrink-0 text-right">
-                    <span className="font-extrabold text-slate-900 dark:text-slate-100">
-                      {formatNumber(item.views)}
-                    </span>
-                    <span className="text-[10px] text-slate-400 w-10 text-right">
-                      {item.percentage}%
-                    </span>
-                  </div>
-                </div>
-
-                {/* Progress bar */}
-                <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      idx === 0
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600"
-                        : "bg-blue-400 dark:bg-blue-500"
-                    }`}
-                    style={{ width: `${Math.min(Math.max(item.percentage, 4), 100)}%` }}
-                  ></div>
-                </div>
+            {stats.countries.length === 0 ? (
+              <div className="text-center py-6 text-xs text-slate-400">
+                Belum ada negara yang tercatat.
               </div>
-            ))}
+            ) : (
+              stats.countries.map((item, idx) => (
+                <div key={item.code} className="pt-2 first:pt-0">
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`w-4 text-[10px] font-bold ${idx === 0 ? "text-amber-500" : "text-slate-400"}`}>
+                        {idx === 0 ? "🥇" : `#${idx + 1}`}
+                      </span>
+                      <span className="text-base leading-none">{item.flag}</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        {item.name}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">({item.code})</span>
+                      {item.code === stats.visitorCountry && (
+                        <span className="text-[9px] font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 px-1 py-0.2 rounded-sm">
+                          Anda
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0 text-right">
+                      <span className="font-extrabold text-slate-900 dark:text-slate-100">
+                        {formatNumber(item.views)}
+                      </span>
+                      <span className="text-[10px] text-slate-400 w-10 text-right">
+                        {item.percentage}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        idx === 0
+                          ? "bg-gradient-to-r from-blue-600 to-indigo-600"
+                          : "bg-blue-400 dark:bg-blue-500"
+                      }`}
+                      style={{ width: `${Math.min(Math.max(item.percentage, 4), 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           {/* Current Visitor Location Badge */}
