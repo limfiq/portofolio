@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [theme, setTheme] = useState("light");
   const pathname = usePathname();
 
   useEffect(() => {
@@ -17,27 +16,6 @@ const Header = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  // Theme Toggler logic
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-    if (savedTheme === "dark" || (!savedTheme && systemPrefersDark)) {
-      setTheme("dark");
-      document.documentElement.classList.add("dark");
-    } else {
-      setTheme("light");
-      document.documentElement.classList.remove("dark");
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    document.documentElement.classList.toggle("dark", newTheme === "dark");
-    localStorage.setItem("theme", newTheme);
-  };
 
   const navLinks = [
     { href: "/project", label: "Proyek Riset" },
@@ -189,26 +167,6 @@ const Header = () => {
             )
           })}
 
-          {/* Theme Toggler */}
-          <button
-            onClick={toggleTheme}
-            className={`p-2 rounded-full border transition-all duration-300 hover:scale-105 active:scale-95 ${isTextWhite
-              ? "border-white/20 text-white hover:bg-white/10"
-              : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            aria-label="Toggle theme"
-          >
-            {theme === "dark" ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 7a5 5 0 100 10 5 5 0 000-10z" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
-            )}
-          </button>
-
           <Link
             href="/contact"
             className="px-5 py-2.5 bg-blue-700 text-white text-sm font-medium rounded-full shadow-lg shadow-blue-700/20 hover:bg-blue-800 transform hover:-translate-y-0.5 transition-all"
@@ -218,27 +176,7 @@ const Header = () => {
         </div>
 
         {/* Mobile Menu Controls */}
-        <div className="flex md:hidden items-center gap-4">
-          {/* Mobile Theme Toggler */}
-          <button
-            onClick={toggleTheme}
-            className={`p-2 rounded-full border transition-all duration-300 ${isTextWhite
-              ? "border-white/20 text-white hover:bg-white/10"
-              : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300"
-              }`}
-            aria-label="Toggle theme"
-          >
-            {theme === "dark" ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 7a5 5 0 100 10 5 5 0 000-10z" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
-            )}
-          </button>
-
+        <div className="flex md:hidden items-center">
           {/* Burger Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}

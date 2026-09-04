@@ -61,9 +61,10 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{
             __html: `(function() {
               try {
-                var theme = localStorage.getItem('theme');
-                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (theme === 'dark' || (!theme && prefersDark)) {
+                localStorage.removeItem('theme');
+                var hour = new Date().getHours();
+                var isNight = hour >= 18 || hour < 6;
+                if (isNight) {
                   document.documentElement.classList.add('dark');
                 } else {
                   document.documentElement.classList.remove('dark');
