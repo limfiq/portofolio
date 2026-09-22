@@ -22,9 +22,6 @@ export default function Home() {
             <HeroSection />
             <AboutSection />
             
-            {/* Developer Tech Stack */}
-            <TechStackSection />
-            
             {/* Academic Class Highlights */}
             <Suspense fallback={<div className="text-center py-12 text-slate-500">Memuat pengajaran...</div>}>
                 <FeaturedTeachingSection />

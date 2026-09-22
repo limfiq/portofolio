@@ -87,7 +87,7 @@ const HeroSection = () => {
                         </div>
 
                         {/* Floating Badge 1: Engineer/Developer */}
-                        <div className="absolute -top-6 -left-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-150 dark:border-slate-800 p-3 rounded-2xl shadow-xl animate-float select-none flex items-center gap-3">
+                        {/* <div className="absolute -top-6 -left-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-150 dark:border-slate-800 p-3 rounded-2xl shadow-xl animate-float select-none flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -97,7 +97,7 @@ const HeroSection = () => {
                                 <div className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-none">Developer</div>
                                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">IT Practitioner</span>
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* Floating Badge 2: Academic/Lecturer */}
                         <div className="absolute -bottom-6 -right-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-150 dark:border-slate-800 p-3 rounded-2xl shadow-xl animate-float animation-delay-2000 select-none flex items-center gap-3">

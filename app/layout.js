@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Portofolio M. Taufiq, M.Kom - Lecturer and Developer",
+  title: "Portofolio M. Taufiq, M.Kom - Lecturer ",
   description: "Discover M. Taufiq, M.Kom's portfolio showcasing teaching, research, publications, projects, and academic activities in computer science and innovation.",
   metadataBase: new URL("https://limfiq.my.id"),
   alternates: {
@@ -31,7 +31,7 @@ export const metadata = {
     icon: "/favicon.ico",
   },
   openGraph: {
-    title: "Portofolio M. Taufiq, M.Kom - Lecturer and Developer",
+    title: "Portofolio M. Taufiq, M.Kom - Lecturer ",
     description: "Discover M. Taufiq, M.Kom's portfolio showcasing teaching, research, publications, projects, and academic activities in computer science and innovation.",
     url: "https://limfiq.my.id",
     siteName: "Portofolio M. Taufiq, M.Kom",
@@ -89,9 +89,9 @@ export default function RootLayout({ children }) {
                     "@type": "Person",
                     name: "M. Taufiq, M.Kom",
                     url: "https://limfiq.my.id",
-                    jobTitle: "Lecturer and Developer",
+                    jobTitle: "Lecturer",
                     description:
-                      "M. Taufiq, M.Kom is a computer science lecturer and developer showcasing teaching, research, publications, projects, and academic activities.",
+                      "M. Taufiq, M.Kom is a computer science lecturer showcasing teaching, research, publications, projects, and academic activities.",
                     sameAs: [
                       "https://limfiq.my.id"
                     ],
