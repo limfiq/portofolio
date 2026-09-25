@@ -5,6 +5,33 @@ import * as cheerio from "cheerio";
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
+// Helper: ambil deskripsi teks dari halaman detail Indbeasiswa
+async function fetchDetailDescription(url) {
+    try {
+        const res = await fetch(url, {
+            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+            signal: AbortSignal.timeout(10000),
+        });
+        if (!res.ok) return null;
+        const html = await res.text();
+        const $ = cheerio.load(html);
+
+        // Hapus elemen yang tidak perlu: iklan, navigasi, gambar lazyload, widget
+        $(".indb-ad-bawah-snapshot, .wp-block-rank-math-toc-block, .wp-block-latest-posts, blockquote, .adsbygoogle, ins, script, style").remove();
+        $("img").remove();
+
+        // Ambil konten utama artikel
+        const content = $(".indb-article-content").text();
+        if (!content || content.trim().length < 50) return null;
+
+        // Bersihkan whitespace berlebih
+        return content.replace(/\s+/g, " ").trim().substring(0, 3000);
+    } catch (e) {
+        console.error("fetchDetailDescription error:", e.message);
+        return null;
+    }
+}
+
 async function runScrape(req) {
     // Verifikasi CRON_SECRET jika di-set di environment variables
     const cronSecret = process.env.CRON_SECRET;
@@ -89,6 +116,13 @@ async function runScrape(req) {
                 .single();
 
             if (!existing) {
+                // Ambil deskripsi lengkap dari halaman detail beasiswa
+                const fullDescription = await fetchDetailDescription(item.url);
+                if (fullDescription) item.description = fullDescription;
+                
+                // Kecil delay agar tidak terlalu agresif ke server Indbeasiswa
+                await new Promise(r => setTimeout(r, 500));
+
                 const { error } = await supabase.from("scholarships").insert([item]);
                 if (!error) insertedCount++;
             }

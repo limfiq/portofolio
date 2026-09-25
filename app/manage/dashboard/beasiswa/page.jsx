@@ -181,7 +181,7 @@ export default function ScholarshipsAdminPage() {
                                 title: item.title,
                                 url: item.url,
                                 provider: item.provider,
-                                description: `Beasiswa untuk jenjang ${item.level}. Diambil otomatis dari Indbeasiswa.`,
+                                description: item.description || `Beasiswa untuk jenjang ${item.level}.`,
                                 deadline: item.deadline || null,
                                 status: "Open"
                             }]);

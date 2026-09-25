@@ -1,6 +1,26 @@
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 
+// Helper: ambil deskripsi dari halaman detail Indbeasiswa
+async function fetchDetailDescription(url) {
+    try {
+        const res = await fetch(url, {
+            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+            signal: AbortSignal.timeout(10000),
+        });
+        if (!res.ok) return null;
+        const html = await res.text();
+        const $ = cheerio.load(html);
+        $(".indb-ad-bawah-snapshot, .wp-block-rank-math-toc-block, .wp-block-latest-posts, blockquote, .adsbygoogle, ins, script, style").remove();
+        $("img").remove();
+        const content = $(".indb-article-content").text();
+        if (!content || content.trim().length < 50) return null;
+        return content.replace(/\s+/g, " ").trim().substring(0, 3000);
+    } catch (e) {
+        return null;
+    }
+}
+
 export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);
@@ -57,6 +77,13 @@ export async function GET(request) {
                 });
             }
         });
+
+        // Ambil deskripsi dari halaman detail masing-masing beasiswa
+        for (const item of results) {
+            const desc = await fetchDetailDescription(item.url);
+            item.description = desc || `Beasiswa untuk jenjang ${item.level}.`;
+            await new Promise(r => setTimeout(r, 300)); // delay kecil
+        }
 
         return NextResponse.json({
             success: true,
