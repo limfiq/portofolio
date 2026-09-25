@@ -160,6 +160,49 @@ export default function ScholarshipsAdminPage() {
         setSubmittingManual(false);
     };
 
+    const handleBulkScrape = async () => {
+        if (!window.confirm("Ini akan mengambil daftar beasiswa terbaru dari Indbeasiswa.com dan menambahkannya ke database. Lanjutkan?")) return;
+        
+        setFetchingUrl(true);
+        try {
+            const res = await fetch("/api/beasiswa/scrape-indbeasiswa");
+            const data = await res.json();
+            
+            if (res.ok && data.success) {
+                if (data.data.length === 0) {
+                    alert("Tidak ada data ditemukan.");
+                } else {
+                    // Check if exists based on URL to prevent duplicates (basic check, can be improved)
+                    let addedCount = 0;
+                    for (const item of data.data) {
+                        const { data: existing } = await supabase.from("scholarships").select("id").eq("url", item.url).single();
+                        if (!existing) {
+                            await supabase.from("scholarships").insert([{
+                                title: item.title,
+                                url: item.url,
+                                provider: item.provider,
+                                description: `Beasiswa untuk jenjang ${item.level}. Diambil otomatis dari Indbeasiswa.`,
+                                deadline: item.deadline || null,
+                                status: "Open"
+                            }]);
+                            addedCount++;
+                        }
+                    }
+                    alert(`Berhasil menarik ${data.data.length} beasiswa. ${addedCount} data baru ditambahkan ke database.`);
+                    fetchScholarships(0);
+                    setPage(0);
+                    fetchCount();
+                }
+            } else {
+                alert("Gagal melakukan scraping massal: " + (data.error || "Unknown error"));
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Terjadi kesalahan saat memanggil API scraper.");
+        }
+        setFetchingUrl(false);
+    };
+
     return (
         <div className="p-4 md:p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -168,6 +211,13 @@ export default function ScholarshipsAdminPage() {
                     <p className="text-sm text-gray-500">Kelola informasi beasiswa untuk ditampilkan di website</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <button 
+                        onClick={handleBulkScrape}
+                        disabled={fetchingUrl}
+                        className="bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+                    >
+                        {fetchingUrl ? "⏳ Sedang Menarik..." : "⚡ Tarik dari Indbeasiswa"}
+                    </button>
                     <button 
                         onClick={openCreateModal}
                         className="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition-all shadow-sm flex items-center gap-2"
