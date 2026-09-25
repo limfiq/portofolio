@@ -32,6 +32,7 @@ const Header = () => {
     { href: "/lecturer", label: "Pengajaran" },
     { href: "/blog", label: "Tulisan" },
     { href: "/loker", label: "Loker" },
+    { href: "/beasiswa", label: "Beasiswa" },
     {
       label: "Aplikasi",
       submenu: [
@@ -68,6 +69,7 @@ const Header = () => {
     "/penelitian",
     "/pengabdian",
     "/loker",
+    "/beasiswa",
     "/blog",
     "/awards",
     "/gallery",
