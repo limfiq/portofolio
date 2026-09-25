@@ -3,6 +3,10 @@
     {
       "path": "/api/loker/scrape",
       "schedule": "0 17 * * *"
+    },
+    {
+      "path": "/api/beasiswa/cron-scrape",
+      "schedule": "0 0 * * *"
     }
   ]
 }

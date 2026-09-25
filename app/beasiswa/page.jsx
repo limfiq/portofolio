@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { createBrowserClient } from "@supabase/ssr";
+import Link from "next/link";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -124,14 +125,17 @@ export default function ScholarshipsPublicPage() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {paginatedItems.map(item => (
+                        {paginatedItems.map(item => {
+                            const expired = item.deadline && new Date(item.deadline) < new Date();
+                            const soon = item.deadline && (() => { const diff = (new Date(item.deadline) - new Date()) / (1000 * 60 * 60 * 24); return diff >= 0 && diff <= 14; })();
+                            return (
                             <div key={item.id} className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-emerald-200 transition-all flex flex-col h-full relative group">
                                 <div className="flex justify-between items-start mb-3">
                                     <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md uppercase ${item.status === 'Open' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
                                         {item.status}
                                     </span>
                                     {item.deadline && (
-                                        <span className="text-[10px] text-slate-500 font-medium">
+                                        <span className={`text-[10px] font-medium ${ expired ? 'text-red-500' : soon ? 'text-amber-500 font-bold' : 'text-slate-500'}`}>
                                             ⏳ {new Date(item.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year:'numeric'})}
                                         </span>
                                     )}
@@ -146,21 +150,30 @@ export default function ScholarshipsPublicPage() {
                                 </p>
                                 
                                 <p className="text-sm text-slate-600 mb-4 line-clamp-3">
-                                    {item.description || "Silakan kunjungi link sumber untuk melihat deskripsi dan kualifikasi lengkap beasiswa ini."}
+                                    {item.description || "Klik Lihat Detail untuk melihat informasi lengkap beasiswa ini."}
                                 </p>
                                 
-                                <div className="pt-3 border-t border-slate-100 mt-auto">
-                                    <a 
-                                        href={item.url} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="block w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all text-center shadow-sm shadow-emerald-100"
+                                <div className="pt-3 border-t border-slate-100 mt-auto flex gap-2">
+                                    <Link 
+                                        href={`/beasiswa/${item.id}`}
+                                        className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all text-center shadow-sm shadow-emerald-100"
                                     >
-                                        Lihat Detail & Daftar &rarr;
-                                    </a>
+                                        Lihat Detail →
+                                    </Link>
+                                    {item.url && (
+                                        <a
+                                            href={item.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            title="Buka link sumber"
+                                            className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all flex items-center"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                        </a>
+                                    )}
                                 </div>
                             </div>
-                        ))}
+                        )})}
                     </div>
                 )}
 
