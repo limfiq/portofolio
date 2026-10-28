@@ -7,6 +7,18 @@
 
 ---
 
+## Claymorphism Visual Language
+
+The site now uses a shared claymorphism theme across public pages and the management dashboard. The palette is a soft blue-gray surface in light mode and a deep slate surface in dark mode. Raised surfaces use paired light/dark shadows, while form controls use inset shadows.
+
+- Global surface, background, and dark-mode tokens live in `app/globals.css`.
+- Reusable raised/inset surfaces are `.clay-surface` and `.clay-inset`.
+- Shared cards and buttons use `.clay-card` and `.clay-button`.
+- The public navigation and footer use `.site-header` and `.site-footer`.
+- Keep semantic foreground/accent colors for text and actions; use the shared surface tokens instead of introducing one-off clay shadow values.
+
+---
+
 ## 1. DESIGN SYSTEM AUDIT
 
 ### 1.1 Color Palette Analysis

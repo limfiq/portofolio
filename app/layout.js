@@ -54,7 +54,7 @@ export default function RootLayout({ children }) {
         <link rel="dns-prefetch" href="https://acbwbhwwloncxbxgyedm.supabase.co" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen clay-theme`}
         suppressHydrationWarning={true}
       >
         <script

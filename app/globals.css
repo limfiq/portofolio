@@ -1,16 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc; /* Slate 50 */
-  --foreground: #0f172a; /* Slate 900 */
-  --grid-color: rgba(99, 102, 241, 0.04);
+  --background: #edf2fb;
+  --foreground: #26334a;
+  --grid-color: rgba(89, 113, 165, 0.08);
+  --clay-surface: #edf2fb;
+  --clay-shadow-light: #ffffff;
+  --clay-shadow-dark: #cbd4e4;
+  --clay-accent: #5578d8;
 }
 
-/* Class-based Dark Mode support */
 html.dark {
-  --background: #0b0f19; /* Deep Slate/Navy 950 */
-  --foreground: #f8fafc; /* Slate 50 */
-  --grid-color: rgba(99, 102, 241, 0.08);
+  --background: #20283a;
+  --foreground: #e8edf7;
+  --grid-color: rgba(179, 196, 228, 0.06);
+  --clay-surface: #20283a;
+  --clay-shadow-light: #2b354b;
+  --clay-shadow-dark: #171d2a;
+  --clay-accent: #8ba8ff;
 }
 
 @theme inline {
@@ -21,13 +28,128 @@ html.dark {
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(ellipse at 12% 2%, rgba(196, 210, 255, 0.48), transparent 34rem),
+    radial-gradient(ellipse at 92% 18%, rgba(220, 202, 255, 0.28), transparent 32rem),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.dark body {
+  background:
+    radial-gradient(ellipse at 12% 2%, rgba(72, 91, 145, 0.2), transparent 34rem),
+    radial-gradient(ellipse at 92% 18%, rgba(92, 67, 133, 0.16), transparent 32rem),
+    var(--background);
+}
+
+.clay-surface {
+  background: var(--clay-surface);
+  border: 1px solid color-mix(in srgb, var(--clay-shadow-light) 70%, transparent);
+  box-shadow:
+    8px 8px 18px var(--clay-shadow-dark),
+    -8px -8px 18px var(--clay-shadow-light);
+}
+
+.clay-card {
+  border-color: color-mix(in srgb, var(--clay-shadow-light) 68%, transparent) !important;
+  box-shadow:
+    8px 8px 18px color-mix(in srgb, var(--clay-shadow-dark) 78%, transparent),
+    -8px -8px 18px color-mix(in srgb, var(--clay-shadow-light) 90%, transparent) !important;
+}
+
+.clay-card:hover {
+  box-shadow:
+    10px 12px 22px color-mix(in srgb, var(--clay-shadow-dark) 72%, transparent),
+    -8px -8px 18px color-mix(in srgb, var(--clay-shadow-light) 88%, transparent) !important;
+}
+
+.clay-button {
+  box-shadow:
+    4px 4px 9px color-mix(in srgb, var(--clay-shadow-dark) 72%, transparent),
+    -4px -4px 9px color-mix(in srgb, var(--clay-shadow-light) 72%, transparent);
+  transition: box-shadow 180ms ease, transform 180ms ease, filter 180ms ease;
+}
+
+.clay-button:hover:not(:disabled) {
+  filter: saturate(1.08);
+  box-shadow:
+    6px 6px 12px color-mix(in srgb, var(--clay-shadow-dark) 76%, transparent),
+    -5px -5px 11px color-mix(in srgb, var(--clay-shadow-light) 72%, transparent);
+}
+
+.clay-inset {
+  background: var(--clay-surface);
+  box-shadow:
+    inset 4px 4px 9px var(--clay-shadow-dark),
+    inset -4px -4px 9px var(--clay-shadow-light);
+}
+
+.clay-theme :is(input, select, textarea) {
+  border-radius: 0.9rem;
+  border-color: color-mix(in srgb, var(--clay-shadow-dark) 65%, transparent);
+  box-shadow:
+    inset 3px 3px 7px var(--clay-shadow-dark),
+    inset -3px -3px 7px var(--clay-shadow-light);
+}
+
+.clay-theme :is(input, select, textarea):focus {
+  outline: 2px solid color-mix(in srgb, var(--clay-accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.clay-theme [class*="rounded-"][class*="bg-white"] {
+  border-color: color-mix(in srgb, var(--clay-shadow-light) 62%, transparent);
+  box-shadow:
+    7px 7px 16px color-mix(in srgb, var(--clay-shadow-dark) 76%, transparent),
+    -7px -7px 16px color-mix(in srgb, var(--clay-shadow-light) 85%, transparent);
+}
+
+.site-header {
+  margin: 0.75rem auto 0;
+  width: min(calc(100% - 2rem), 88rem);
+  border: 1px solid color-mix(in srgb, var(--clay-shadow-light) 60%, transparent);
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--clay-surface) 86%, transparent);
+  box-shadow:
+    6px 6px 14px color-mix(in srgb, var(--clay-shadow-dark) 70%, transparent),
+    -6px -6px 14px color-mix(in srgb, var(--clay-shadow-light) 75%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.site-footer {
+  background: var(--clay-surface);
+  color: var(--foreground);
+  border: 1px solid color-mix(in srgb, var(--clay-shadow-light) 55%, transparent);
+  border-radius: 2rem 2rem 0 0;
+  box-shadow:
+    0 -8px 20px color-mix(in srgb, var(--clay-shadow-dark) 58%, transparent),
+    0 4px 12px color-mix(in srgb, var(--clay-shadow-light) 65%, transparent);
+}
+
+.site-footer :is(h3, a.text-white, .text-white) {
+  color: var(--foreground);
+}
+
+.site-footer :is(p, a.text-slate-300) {
+  color: color-mix(in srgb, var(--foreground) 72%, transparent);
+}
+
+.site-footer [class*="bg-slate-8"],
+.site-footer [class*="bg-slate-9"] {
+  background: var(--clay-surface);
+  box-shadow:
+    4px 4px 9px color-mix(in srgb, var(--clay-shadow-dark) 70%, transparent),
+    -4px -4px 9px color-mix(in srgb, var(--clay-shadow-light) 72%, transparent);
+}
+
+.clay-theme button:not(:disabled):active,
+.clay-theme [role="button"]:active {
+  transform: translateY(1px) scale(0.98);
 }
 
 /* Custom Grid Patterns */

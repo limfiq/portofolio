@@ -21,7 +21,7 @@ export const Badge = React.forwardRef(
             <span
                 ref={ref}
                 className={`
-                    font-bold rounded-md uppercase tracking-wide
+                    font-bold rounded-xl uppercase tracking-wide shadow-sm
                     inline-flex items-center gap-1
                     ${variantClasses[variant]}
                     ${sizeClasses[size]}

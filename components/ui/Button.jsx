@@ -37,7 +37,7 @@ export const Button = React.forwardRef(
             <button
                 ref={ref}
                 className={`
-                    font-semibold rounded-lg transition-all duration-200
+                    clay-button font-semibold rounded-xl transition-all duration-200
                     active:scale-95 select-none
                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
                     dark:focus:ring-offset-slate-900

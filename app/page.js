@@ -13,7 +13,7 @@ import PageTracker from "@/components/PageTracker";
 
 export default function Home() {
     return (
-        <div className="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 min-h-screen">
+        <div className="text-slate-900 dark:text-slate-100 transition-colors duration-300 min-h-screen">
             <Suspense fallback={null}>
                 <PageTracker name="Home" />
             </Suspense>

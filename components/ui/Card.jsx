@@ -3,7 +3,7 @@ import React from 'react';
 export const Card = React.forwardRef(({ className, ...props }, ref) => (
     <div
         ref={ref}
-        className={`bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 
+        className={`clay-card bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800
                      shadow-sm hover:shadow-xl rounded-2xl overflow-hidden 
                      hover:-translate-y-1 transition-all duration-300 
                      flex flex-col h-full group ${className || ''}`}
