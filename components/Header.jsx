@@ -21,25 +21,27 @@ const Header = () =>
   }, [] );
 
   const navLinks = [
-    { href: "/project", label: "Proyek Riset" },
+    { href: "/project", label: "Proyek Riset", icon: "🔬" },
     {
       label: "PPM",
+      icon: "📚",
       submenu: [
-        { href: "/publications", label: "Publikasi" },
-        { href: "/penelitian", label: "Penelitian" },
-        { href: "/pengabdian", label: "Pengabdian" },
-        { href: "/awards", label: "Penghargaan" },
-        { href: "/gallery", label: "Galeri" },
-        { href: "/lecturer", label: "Pengajaran" },
+        { href: "/publications", label: "Publikasi", icon: "📄" },
+        { href: "/penelitian", label: "Penelitian", icon: "🧪" },
+        { href: "/pengabdian", label: "Pengabdian", icon: "🤝" },
+        { href: "/awards", label: "Penghargaan", icon: "🏆" },
+        { href: "/gallery", label: "Galeri", icon: "🖼️" },
+        { href: "/lecturer", label: "Pengajaran", icon: "🎓" },
       ]
     },
-    { href: "/blog", label: "Tulisan" },
+    { href: "/blog", label: "Tulisan", icon: "✍️" },
     {
       label: "Lainnya",
+      icon: "➕",
       submenu: [
         
-        { href: "/loker", label: "Loker" },
-        { href: "/beasiswa", label: "Beasiswa" },
+        { href: "/loker", label: "Loker", icon: "💼" },
+        { href: "/beasiswa", label: "Beasiswa", icon: "🎓" },
       ]
     },
     {
@@ -100,6 +102,7 @@ const Header = () =>
                     ? isSubActive ? "text-white" : "text-white/80 hover:text-white"
                     : isSubActive ? "text-blue-700 dark:text-blue-400" : "text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400"
                     }`}>
+                    {link.icon && <span aria-hidden="true">{link.icon}</span>}
                     {link.label}
                     <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                     <span className={`absolute bottom-0 left-0 w-0 h-0.5 transition-all duration-300 group-hover:w-full ${isTextWhite ? "bg-white" : "bg-blue-700 dark:bg-blue-400"
@@ -137,7 +140,10 @@ const Header = () =>
                       }
                       return (
                         <Link key={sub.href} href={sub.href} className={`px-4 py-3 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 ${pathname === sub.href ? 'text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20' : 'text-slate-700 dark:text-slate-300'}`}>
-                          {sub.label}
+                          <span className="flex items-center gap-2">
+                            {sub.icon && <span aria-hidden="true">{sub.icon}</span>}
+                            {sub.label}
+                          </span>
                         </Link>
                       );
                     })}
@@ -156,7 +162,10 @@ const Header = () =>
                   : isActive ? "text-blue-700 dark:text-blue-400" : "text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400"
                   }`}
               >
-                {link.label}
+                <span className="inline-flex items-center gap-2">
+                  {link.icon && <span aria-hidden="true">{link.icon}</span>}
+                  {link.label}
+                </span>
                 <span className={`absolute bottom-0 left-0 w-0 h-0.5 transition-all duration-300 group-hover:w-full ${isTextWhite ? "bg-white" : "bg-blue-700 dark:bg-blue-400"
                   } ${isActive ? "w-full" : ""}`}></span>
               </Link>
@@ -200,7 +209,10 @@ const Header = () =>
             if (link.submenu) {
               return (
                 <div key={link.label} className="flex flex-col items-center gap-4">
-                  <span className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{link.label}</span>
+                  <span className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest inline-flex items-center gap-2">
+                    {link.icon && <span aria-hidden="true">{link.icon}</span>}
+                    {link.label}
+                  </span>
                   {link.submenu.map(sub => {
                     if (sub.external) {
                       return (
@@ -227,7 +239,10 @@ const Header = () =>
                         className="text-lg font-medium text-slate-700 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400"
                         onClick={() => setIsMenuOpen(false)}
                       >
-                        {sub.label}
+                        <span className="inline-flex items-center gap-2">
+                          {sub.icon && <span aria-hidden="true">{sub.icon}</span>}
+                          {sub.label}
+                        </span>
                       </Link>
                     );
                   })}
@@ -242,7 +257,10 @@ const Header = () =>
                 className="text-lg font-medium text-slate-700 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400"
                 onClick={() => setIsMenuOpen(false)}
               >
-                {link.label}
+                <span className="inline-flex items-center gap-2">
+                  {link.icon && <span aria-hidden="true">{link.icon}</span>}
+                  {link.label}
+                </span>
               </Link>
             );
           })}
