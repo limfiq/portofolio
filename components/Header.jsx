@@ -4,18 +4,21 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+const Header = () =>
+{
+  const [ isMenuOpen, setIsMenuOpen ] = useState( false );
+  const [ isScrolled, setIsScrolled ] = useState( false );
   const pathname = usePathname();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+  useEffect( () =>
+  {
+    const handleScroll = () =>
+    {
+      setIsScrolled( window.scrollY > 10 );
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    window.addEventListener( "scroll", handleScroll );
+    return () => window.removeEventListener( "scroll", handleScroll );
+  }, [] );
 
   const navLinks = [
     { href: "/project", label: "Proyek Riset" },
@@ -27,12 +30,18 @@ const Header = () => {
         { href: "/pengabdian", label: "Pengabdian" },
         { href: "/awards", label: "Penghargaan" },
         { href: "/gallery", label: "Galeri" },
+        { href: "/lecturer", label: "Pengajaran" },
       ]
     },
-    { href: "/lecturer", label: "Pengajaran" },
     { href: "/blog", label: "Tulisan" },
-    { href: "/loker", label: "Loker" },
-    { href: "/beasiswa", label: "Beasiswa" },
+    {
+      label: "Lainnya",
+      submenu: [
+        
+        { href: "/loker", label: "Loker" },
+        { href: "/beasiswa", label: "Beasiswa" },
+      ]
+    },
     {
       label: "Aplikasi",
       submenu: [
