@@ -24,7 +24,7 @@ const Header = () =>
     { href: "/project", label: "Proyek Riset", icon: "🔬" },
     {
       label: "PPM",
-      icon: "📚",
+    //  icon: "📚",
       submenu: [
         { href: "/publications", label: "Publikasi", icon: "📄" },
         { href: "/penelitian", label: "Penelitian", icon: "🧪" },
@@ -37,7 +37,7 @@ const Header = () =>
     { href: "/blog", label: "Tulisan", icon: "✍️" },
     {
       label: "Lainnya",
-      icon: "➕",
+     // icon: "➕",
       submenu: [
         
         { href: "/loker", label: "Loker", icon: "💼" },
